@@ -5,11 +5,11 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "screenshot_notes")
 data class ScreenshotNoteEntity(
-    @PrimaryKey val id: String,
-    val imageUri: String,
+    @PrimaryKey(autoGenerate = true)
+    val id: Int = 0,
+    val imagePath: String,
     val extractedText: String,
-    val tags: String, // Comma-separated tags (e.g. "java,programming")
+    val tags: String,
     val category: String,
-    val dateCreated: Long,
-    val dateModified: Long
+    val dateCreated: Long
 )

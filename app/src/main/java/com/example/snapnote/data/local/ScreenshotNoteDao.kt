@@ -14,7 +14,7 @@ interface ScreenshotNoteDao {
     fun getAllNotes(): Flow<List<ScreenshotNoteEntity>>
 
     @Query("SELECT * FROM screenshot_notes WHERE id = :id")
-    suspend fun getNoteById(id: String): ScreenshotNoteEntity?
+    suspend fun getNoteById(id: Int): ScreenshotNoteEntity?
 
     @Query("SELECT * FROM screenshot_notes WHERE category = :category ORDER BY dateCreated DESC")
     fun getNotesByCategory(category: String): Flow<List<ScreenshotNoteEntity>>

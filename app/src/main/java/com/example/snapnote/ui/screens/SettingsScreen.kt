@@ -2,10 +2,9 @@ package com.example.snapnote.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
@@ -20,7 +19,7 @@ fun SettingsScreen(onNavigateBack: () -> Unit) {
                 title = { Text("Settings") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
@@ -41,21 +40,21 @@ fun SettingsScreen(onNavigateBack: () -> Unit) {
                     )
                 }
             )
-            Divider()
+            HorizontalDivider()
             
             ListItem(
                 headlineContent = { Text("Re-run OCR on all notes") },
                 supportingContent = { Text("Process images again to extract text") },
                 modifier = Modifier.padding(vertical = 8.dp)
             )
-            Divider()
+            HorizontalDivider()
             
             ListItem(
                 headlineContent = { Text("Backup & Restore") },
                 supportingContent = { Text("Export database or restore from a backup") },
                 modifier = Modifier.padding(vertical = 8.dp)
             )
-            Divider()
+            HorizontalDivider()
         }
     }
 }
