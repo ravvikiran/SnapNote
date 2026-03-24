@@ -1,15 +1,10 @@
-package com.example.snapnote.domain.models
+package com.snapnote.domain.models
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
-
-@Entity(tableName = "screenshot_notes")
 data class ScreenshotNote(
-    @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
     val imagePath: String,
     val extractedText: String,
-    val tags: String, // Stored as comma-separated string for simplicity
+    val tags: List<String>,
     val category: String,
-    val dateCreated: Long
+    val dateAdded: Long
 )

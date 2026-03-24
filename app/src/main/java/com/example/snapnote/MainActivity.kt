@@ -1,4 +1,4 @@
-package com.example.snapnote
+package com.snapnote
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -9,8 +9,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
-import com.example.snapnote.ui.navigation.NavGraph
-import com.example.snapnote.ui.theme.SnapNoteTheme
+import com.snapnote.ui.navigation.NavGraph
+import com.snapnote.ui.theme.SnapNoteTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

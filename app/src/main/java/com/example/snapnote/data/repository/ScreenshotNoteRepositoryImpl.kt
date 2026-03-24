@@ -1,51 +1,59 @@
-package com.example.snapnote.data.repository
+package com.snapnote.data.repository
 
-import com.example.snapnote.data.local.ScreenshotNoteDao
-import com.example.snapnote.data.local.ScreenshotNoteEntity
-import com.example.snapnote.domain.models.ScreenshotNote
+import com.snapnote.data.local.ScreenshotNoteDao
+import com.snapnote.data.local.ScreenshotNoteEntity
+import com.snapnote.domain.models.ScreenshotNote
+import com.snapnote.domain.repository.ScreenshotNoteRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 class ScreenshotNoteRepositoryImpl(
     private val dao: ScreenshotNoteDao
-) {
+) : ScreenshotNoteRepository {
 
-    fun getAllNotes(): Flow<List<ScreenshotNote>> {
-        return dao.getAllNotes().map { entities -> entities.map { it.toDomainModel() } }
+    override fun getAllNotes(): Flow<List<ScreenshotNote>> {
+        return dao.getAllNotes().map { entities ->
+            entities.map { it.toDomain() }
+        }
     }
 
-    suspend fun getNoteById(id: Int): ScreenshotNote? {
-        return dao.getNoteById(id)?.toDomainModel()
+    override fun searchNotes(query: String): Flow<List<ScreenshotNote>> {
+        return dao.searchNotes(query).map { entities ->
+            entities.map { it.toDomain() }
+        }
     }
 
-    fun searchNotes(query: String): Flow<List<ScreenshotNote>> {
-        return dao.searchNotes(query).map { entities -> entities.map { it.toDomainModel() } }
+    override suspend fun insertNote(note: ScreenshotNote) {
+        dao.insertNote(note.toEntity())
     }
 
-    suspend fun saveNote(note: ScreenshotNote) {
-        dao.insert(note.toEntity())
+    override suspend fun deleteNote(note: ScreenshotNote) {
+        dao.deleteNote(note.toEntity())
     }
 
-    suspend fun deleteNote(note: ScreenshotNote) {
-        dao.delete(note.toEntity())
+    override suspend fun getNoteByPath(path: String): ScreenshotNote? {
+        return dao.getNoteByPath(path)?.toDomain()
     }
 
-    // Mapper Extension Functions
-    private fun ScreenshotNoteEntity.toDomainModel() = ScreenshotNote(
-        id = id,
-        imagePath = imagePath,
-        extractedText = extractedText,
-        tags = tags,
-        category = category,
-        dateCreated = dateCreated
-    )
+    private fun ScreenshotNoteEntity.toDomain(): ScreenshotNote {
+        return ScreenshotNote(
+            id = id,
+            imagePath = imagePath,
+            extractedText = extractedText,
+            tags = tags.split(",").filter { it.isNotBlank() },
+            category = category,
+            dateAdded = dateAdded
+        )
+    }
 
-    private fun ScreenshotNote.toEntity() = ScreenshotNoteEntity(
-        id = id,
-        imagePath = imagePath,
-        extractedText = extractedText,
-        tags = tags,
-        category = category,
-        dateCreated = dateCreated
-    )
+    private fun ScreenshotNote.toEntity(): ScreenshotNoteEntity {
+        return ScreenshotNoteEntity(
+            id = id,
+            imagePath = imagePath,
+            extractedText = extractedText,
+            tags = tags.joinToString(","),
+            category = category,
+            dateAdded = dateAdded
+        )
+    }
 }

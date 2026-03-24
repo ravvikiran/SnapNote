@@ -1,4 +1,4 @@
-package com.example.snapnote.ui.screens
+package com.snapnote.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -12,8 +12,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
-import com.example.snapnote.presentation.MainViewModel
-import com.example.snapnote.presentation.UiState
+import com.snapnote.presentation.MainViewModel
+import com.snapnote.presentation.UiState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

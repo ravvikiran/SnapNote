@@ -1,107 +1,85 @@
-package com.example.snapnote.presentation
+package com.snapnote.presentation
 
 import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.snapnote.data.local.AppDatabase
-import com.example.snapnote.data.local.ScreenshotNoteEntity
-import com.example.snapnote.domain.usecases.ExtractTextUseCase
-import com.example.snapnote.utils.ScreenshotProvider
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import com.snapnote.data.local.AppDatabase
+import com.snapnote.data.local.ScreenshotNoteEntity
+import com.snapnote.domain.usecases.ExtractTextUseCase
+import com.snapnote.domain.usecases.SuggestTagsUseCase
+import com.snapnote.utils.ScreenshotProvider
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 sealed class UiState {
-    object Loading : UiState()
+    data object Loading : UiState()
     data class Success(val notes: List<ScreenshotNoteEntity>) : UiState()
     data class Error(val message: String) : UiState()
 }
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
-    private val db = AppDatabase.getDatabase(application)
-    private val dao = db.screenshotNoteDao()
-    private val extractTextUseCase = ExtractTextUseCase(application)
-    private val screenshotProvider = ScreenshotProvider(application)
+    private val database = androidx.room.Room.databaseBuilder(
+        application,
+        AppDatabase::class.java, "snapnote-db"
+    ).build()
 
-    private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
-    val uiState: StateFlow<UiState> = _uiState.asStateFlow()
+    private val repository = database.screenshotNoteDao()
+    private val extractTextUseCase = ExtractTextUseCase(application)
+    private val suggestTagsUseCase = SuggestTagsUseCase()
+    private val screenshotProvider = ScreenshotProvider(application)
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
-    init {
-        loadNotes()
-    }
-
-    fun loadNotes() {
-        viewModelScope.launch {
-            dao.getAllNotes().collect { notes ->
-                _uiState.value = UiState.Success(notes)
+    @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
+    val uiState: StateFlow<UiState> = _searchQuery
+        .debounce(300)
+        .flatMapLatest { query ->
+            if (query.isEmpty()) {
+                repository.getAllNotes()
+            } else {
+                repository.searchNotes(query)
             }
         }
-    }
+        .map { notes -> UiState.Success(notes) as UiState }
+        .onStart { emit(UiState.Loading) }
+        .catch { e -> emit(UiState.Error(e.message ?: "Unknown error")) }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = UiState.Loading
+        )
 
     fun onSearchQueryChanged(query: String) {
         _searchQuery.value = query
-        viewModelScope.launch {
-            if (query.isEmpty()) {
-                loadNotes()
-            } else {
-                dao.searchNotes(query).collect { notes ->
-                    _uiState.value = UiState.Success(notes)
-                }
-            }
-        }
     }
 
     fun scanExistingScreenshots() {
         viewModelScope.launch {
-            _uiState.value = UiState.Loading
-            val localScreenshots = screenshotProvider.fetchScreenshots()
-            
-            localScreenshots.forEach { local ->
-                // Check if already in DB
-                // For simplicity in this demo, we'll just process if not present
-                // A better way would be checking imagePath
-                
-                val uri = Uri.parse(local.uri)
-                val text = extractTextUseCase(uri)
-                if (text.isNotBlank()) {
-                    val tags = suggestTags(text)
-                    val category = suggestCategory(text)
-                    val entity = ScreenshotNoteEntity(
-                        imagePath = local.uri,
-                        extractedText = text,
-                        tags = tags.joinToString(","),
-                        category = category,
-                        dateCreated = local.dateAdded * 1000 // MediaStore uses seconds
-                    )
-                    dao.insert(entity)
-                }
+            val uris = screenshotProvider.getRecentScreenshots()
+            uris.forEach { uri ->
+                processScreenshot(uri)
             }
-            loadNotes()
         }
     }
 
-    private fun suggestTags(text: String): List<String> {
-        val tags = mutableListOf<String>()
-        val lowerText = text.lowercase()
-        if (lowerText.contains("java") || lowerText.contains("kotlin") || lowerText.contains("android")) tags.add("programming")
-        if (lowerText.contains("recipe") || lowerText.contains("food") || lowerText.contains("cook")) tags.add("food")
-        if (lowerText.contains("upi") || lowerText.contains("bank") || lowerText.contains("payment")) tags.add("finance")
-        if (lowerText.contains("otp") || lowerText.contains("verification")) tags.add("security")
-        return tags
-    }
-
-    private fun suggestCategory(text: String): String {
-        val lowerText = text.lowercase()
-        return when {
-            lowerText.contains("java") || lowerText.contains("kotlin") -> "Programming"
-            lowerText.contains("upi") || lowerText.contains("bank") -> "Finance"
-            lowerText.contains("recipe") -> "Food"
-            else -> "General"
+    private suspend fun processScreenshot(uri: Uri) {
+        val path = uri.toString()
+        if (repository.getNoteByPath(path) == null) {
+            val text = extractTextUseCase.execute(uri)
+            if (text.isNotBlank()) {
+                val tags = suggestTagsUseCase.execute(text)
+                val note = ScreenshotNoteEntity(
+                    imagePath = path,
+                    extractedText = text,
+                    tags = tags.joinToString(","),
+                    category = "Uncategorized"
+                )
+                repository.insertNote(note)
+            }
         }
     }
 }

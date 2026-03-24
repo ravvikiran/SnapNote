@@ -1,12 +1,12 @@
-package com.example.snapnote.domain.repository
+package com.snapnote.domain.repository
 
-import com.example.snapnote.domain.models.ScreenshotNote
+import com.snapnote.domain.models.ScreenshotNote
 import kotlinx.coroutines.flow.Flow
 
 interface ScreenshotNoteRepository {
     fun getAllNotes(): Flow<List<ScreenshotNote>>
-    suspend fun getNoteById(id: Int): ScreenshotNote?
     fun searchNotes(query: String): Flow<List<ScreenshotNote>>
-    suspend fun saveNote(note: ScreenshotNote)
+    suspend fun insertNote(note: ScreenshotNote)
     suspend fun deleteNote(note: ScreenshotNote)
+    suspend fun getNoteByPath(path: String): ScreenshotNote?
 }

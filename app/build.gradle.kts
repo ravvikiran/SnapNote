@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.snapnote"
+    namespace = "com.snapnote"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.snapnote"
+        applicationId = "com.snapnote"
         minSdk = 26
         targetSdk = 35
         versionCode = 1

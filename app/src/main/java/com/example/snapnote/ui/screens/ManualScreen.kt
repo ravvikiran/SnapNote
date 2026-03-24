@@ -1,4 +1,4 @@
-package com.example.snapnote.ui.screens
+package com.snapnote.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState

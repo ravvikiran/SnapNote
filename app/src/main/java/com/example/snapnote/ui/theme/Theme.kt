@@ -1,4 +1,4 @@
-package com.example.snapnote.ui.theme
+package com.snapnote.ui.theme
 
 import android.app.Activity
 import android.os.Build

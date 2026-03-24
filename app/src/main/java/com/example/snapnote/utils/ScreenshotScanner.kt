@@ -1,4 +1,4 @@
-package com.example.snapnote.utils
+package com.snapnote.utils
 
 import android.content.ContentUris
 import android.content.Context
