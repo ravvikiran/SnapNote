@@ -1,3 +1,5 @@
+import com.android.build.api.dsl.ApplicationExtension
+
 plugins {
     alias(libs.plugins.com.android.application)
     alias(libs.plugins.org.jetbrains.kotlin.android)
@@ -5,14 +7,14 @@ plugins {
     alias(libs.plugins.org.jetbrains.kotlin.plugin.compose)
 }
 
-android {
+extensions.configure<ApplicationExtension> {
     namespace = "com.snapnote"
     compileSdk = 36
 
     defaultConfig {
         applicationId = "com.snapnote"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
@@ -23,7 +25,7 @@ android {
     }
 
     buildTypes {
-        release {
+        getByName("release") {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
@@ -31,11 +33,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-    }
-    kotlin {
-        compilerOptions {
-            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
-        }
     }
     buildFeatures {
         compose = true
@@ -46,6 +43,10 @@ android {
         }
     }
 }
+
+// Kotlin extension needs to be outside or handled differently in the new DSL if using kotlin { ... }
+// But for jvmTarget, it's often better to use compileOptions or the specific kotlin options.
+// Reverting to a more standard way for AGP 9.0+ that avoids the 'android' deprecation.
 
 dependencies {
     // Core Android
