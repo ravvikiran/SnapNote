@@ -1,2 +1,41 @@
-// Duplicate file - content removed to resolve redeclaration error.
-// Please delete this file and use com/example/snapnote/domain/usecases/ExtractTextUseCase.kt instead.
+package com.snapnote.domain.usecases
+
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.ImageDecoder
+import android.net.Uri
+import android.os.Build
+import android.provider.MediaStore
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
+
+class ExtractTextUseCase(private val context: Context) {
+    private val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+
+    suspend fun execute(imageUri: Uri): String = withContext(Dispatchers.IO) {
+        try {
+            val bitmap = loadBitmap(imageUri)
+            val image = InputImage.fromBitmap(bitmap, 0)
+            val result = recognizer.process(image).await()
+            result.text
+        } catch (e: Exception) {
+            ""
+        }
+    }
+
+    private fun loadBitmap(uri: Uri): Bitmap {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            val source = ImageDecoder.createSource(context.contentResolver, uri)
+            ImageDecoder.decodeBitmap(source) { decoder, _, _ ->
+                decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
+            }
+        } else {
+            @Suppress("DEPRECATION")
+            MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
+        }
+    }
+}
