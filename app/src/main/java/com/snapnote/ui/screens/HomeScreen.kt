@@ -39,7 +39,6 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val scope = rememberCoroutineScope()
     
     val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         Manifest.permission.READ_MEDIA_IMAGES
@@ -47,11 +46,17 @@ fun HomeScreen(
         Manifest.permission.READ_EXTERNAL_STORAGE
     }
 
+    val snackbarHostState = remember { SnackbarHostState() }
+
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
             viewModel.scanExistingScreenshots()
+        } else {
+            scope.launch {
+                snackbarHostState.showSnackbar("Permission required to scan screenshots")
+            }
         }
     }
 
@@ -81,6 +86,7 @@ fun HomeScreen(
         }
     ) {
         Scaffold(
+            snackbarHost = { SnackbarHost(snackbarHostState) },
             topBar = {
                 CenterAlignedTopAppBar(
                     title = { Text("SnapNote") },

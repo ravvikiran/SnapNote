@@ -2,10 +2,12 @@ package com.snapnote.presentation
 
 import android.app.Application
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.snapnote.data.local.AppDatabase
 import com.snapnote.data.local.ScreenshotNoteEntity
+import com.snapnote.data.repository.ScreenshotNoteRepositoryImpl
 import com.snapnote.domain.usecases.ExtractTextUseCase
 import com.snapnote.domain.usecases.SuggestTagsUseCase
 import com.snapnote.utils.ScreenshotProvider
@@ -15,6 +17,8 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
+private const val TAG = "MainViewModel"
+
 sealed class UiState {
     data object Loading : UiState()
     data class Success(val notes: List<ScreenshotNoteEntity>) : UiState()
@@ -23,7 +27,7 @@ sealed class UiState {
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val database = AppDatabase.getDatabase(application)
-    private val repository = database.screenshotNoteDao()
+    private val repository = ScreenshotNoteRepositoryImpl(database.screenshotNoteDao())
     private val extractTextUseCase = ExtractTextUseCase(application)
     private val suggestTagsUseCase = SuggestTagsUseCase()
     private val screenshotProvider = ScreenshotProvider(application)
@@ -63,7 +67,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     processScreenshot(uri)
                 }
             } catch (e: Exception) {
-                // Log or handle error
+                Log.e(TAG, "Error scanning screenshots", e)
             }
         }
     }
@@ -93,9 +97,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun updateNote(note: ScreenshotNoteEntity) {
-        viewModelScope.launch(Dispatchers.IO) {
-            repository.insertNote(note)
-        }
+    override fun onCleared() {
+        super.onCleared()
+        extractTextUseCase.close()
     }
-}

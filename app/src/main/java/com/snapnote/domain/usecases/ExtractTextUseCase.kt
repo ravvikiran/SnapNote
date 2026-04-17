@@ -38,4 +38,8 @@ class ExtractTextUseCase(private val context: Context) {
             MediaStore.Images.Media.getBitmap(context.contentResolver, uri)
         }
     }
+
+    fun close() {
+        recognizer.close()
+    }
 }

@@ -7,7 +7,7 @@ class SuggestTagsUseCase {
 
         val tagMap = mapOf(
             "#finance" to listOf("receipt", "bill", "bank", "pay", "invoice", "upi", "amount", "transaction"),
-            "#programming" to listOf("code", "class", "fun ", "def ", "function", "api", "git", "java", "kotlin"),
+            "#programming" to listOf("code", "class", "fun", "def", "function", "api", "git", "java", "kotlin", "python", "script"),
             "#food" to listOf("recipe", "ingredients", "cook", "menu", "restaurant", "bake"),
             "#travel" to listOf("flight", "ticket", "hotel", "booking", "itinerary", "boarding"),
             "#shopping" to listOf("order", "delivery", "cart", "amazon", "flipkart", "shipping"),
