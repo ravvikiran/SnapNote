@@ -9,10 +9,12 @@ import androidx.navigation.navArgument
 import com.snapnote.ui.screens.DetailScreen
 import com.snapnote.ui.screens.HomeScreen
 import com.snapnote.ui.screens.ManualScreen
+import com.snapnote.ui.screens.SettingsScreen
 
 sealed class Screen(val route: String) {
     object Home : Screen("home")
     object Manual : Screen("manual")
+    object Settings : Screen("settings")
     object Detail : Screen("detail/{noteId}") {
         fun createRoute(noteId: Int) = "detail/$noteId"
     }
@@ -31,11 +33,19 @@ fun NavGraph(navController: NavHostController) {
                 },
                 onNavigateToManual = {
                     navController.navigate(Screen.Manual.route)
+                },
+                onNavigateToSettings = {
+                    navController.navigate(Screen.Settings.route)
                 }
             )
         }
         composable(Screen.Manual.route) {
             ManualScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        composable(Screen.Settings.route) {
+            SettingsScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }

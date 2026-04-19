@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -28,17 +29,21 @@ import com.snapnote.data.local.ScreenshotNoteEntity
 import com.snapnote.presentation.MainViewModel
 import com.snapnote.presentation.UiState
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     onNavigateToDetail: (Int) -> Unit,
     onNavigateToManual: () -> Unit,
+    onNavigateToSettings: () -> Unit,
     viewModel: MainViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
+    val selectedCategory by viewModel.selectedCategory.collectAsState()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
     
     val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         Manifest.permission.READ_MEDIA_IMAGES
@@ -82,6 +87,16 @@ fun HomeScreen(
                     },
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                 )
+                NavigationDrawerItem(
+                    icon = { Icon(Icons.Default.Settings, contentDescription = null) },
+                    label = { Text("Settings") },
+                    selected = false,
+                    onClick = { 
+                        scope.launch { drawerState.close() }
+                        onNavigateToSettings() 
+                    },
+                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                )
             }
         }
     ) {
@@ -98,91 +113,13 @@ fun HomeScreen(
                 )
             }
         ) { padding ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-            ) {
-                // Search Bar
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { viewModel.onSearchQueryChanged(it) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    placeholder = { Text("Search text, tags, etc.") },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
-                    shape = MaterialTheme.shapes.medium,
-                    singleLine = true
+                SearchContent(
+                    viewModel = viewModel,
+                    searchQuery = searchQuery,
+                    selectedCategory = selectedCategory,
+                    onNavigateToDetail = onNavigateToDetail,
+                    uiState = uiState
                 )
-
-                Button(
-                    onClick = { launcher.launch(permission) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    shape = MaterialTheme.shapes.medium
-                ) {
-                    Text("Scan Existing Screenshots")
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                when (val state = uiState) {
-                    is UiState.Loading -> {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator()
-                        }
-                    }
-                    is UiState.Success -> {
-                        if (state.notes.isEmpty()) {
-                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                Text("No screenshots found. Try scanning!")
-                            }
-                        } else {
-                            // Categories
-                            val categories = listOf("All") + state.notes.map { it.category }.distinct()
-                            LazyRow(
-                                contentPadding = PaddingValues(horizontal = 16.dp),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                items(categories) { category ->
-                                    FilterChip(
-                                        selected = false,
-                                        onClick = { /* Filter logic */ },
-                                        label = { Text(category) }
-                                    )
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            Text(
-                                "Recent Screenshots",
-                                style = MaterialTheme.typography.titleMedium,
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                            )
-
-                            LazyVerticalGrid(
-                                columns = GridCells.Fixed(2),
-                                contentPadding = PaddingValues(16.dp),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                verticalArrangement = Arrangement.spacedBy(12.dp),
-                                modifier = Modifier.fillMaxSize()
-                            ) {
-                                items(state.notes) { note ->
-                                    ScreenshotCard(note = note, onClick = { onNavigateToDetail(note.id) })
-                                }
-                            }
-                        }
-                    }
-                    is UiState.Error -> {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Text("Error: ${state.message}")
-                        }
-                    }
-                }
-            }
         }
     }
 }
@@ -197,14 +134,21 @@ fun ScreenshotCard(note: ScreenshotNoteEntity, onClick: () -> Unit) {
         shape = MaterialTheme.shapes.medium
     ) {
         Column {
-            AsyncImage(
-                model = note.imagePath,
-                contentDescription = null,
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
-                contentScale = ContentScale.Crop
-            )
+                contentAlignment = Alignment.Center
+            ) {
+                AsyncImage(
+                    model = note.imagePath,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .fillMaxHeight(),
+                    contentScale = ContentScale.Crop
+                )
+            }
             Column(modifier = Modifier.padding(8.dp)) {
                 Text(
                     text = note.category,
@@ -216,6 +160,121 @@ fun ScreenshotCard(note: ScreenshotNoteEntity, onClick: () -> Unit) {
                     style = MaterialTheme.typography.bodySmall,
                     maxLines = 2
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SearchContent(
+    viewModel: MainViewModel,
+    searchQuery: String,
+    selectedCategory: String?,
+    onNavigateToDetail: (Int) -> Unit,
+    uiState: UiState
+) {
+    val scope = rememberCoroutineScope()
+    val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        Manifest.permission.READ_MEDIA_IMAGES
+    } else {
+        Manifest.permission.READ_EXTERNAL_STORAGE
+    }
+
+    val launcher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            viewModel.scanExistingScreenshots()
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+    ) {
+        // Search Bar
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { viewModel.onSearchQueryChanged(it) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            placeholder = { Text("Search text, tags, etc.") },
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+            shape = MaterialTheme.shapes.medium,
+            singleLine = true
+        )
+
+        Button(
+            onClick = { launcher.launch(permission) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            shape = MaterialTheme.shapes.medium
+        ) {
+            Text("Scan Existing Screenshots")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        when (val state = uiState) {
+            is UiState.Loading -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            }
+            is UiState.Success -> {
+                if (state.notes.isEmpty()) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text("No screenshots found. Try scanning!")
+                    }
+                } else {
+                    // Categories
+                    val categories = listOf("All") + state.notes.map { it.category }.distinct()
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(categories) { category ->
+                            FilterChip(
+                                selected = (if (category == "All") selectedCategory == null else category == selectedCategory),
+                                onClick = {
+                                    if (category == "All") {
+                                        viewModel.selectCategory(null)
+                                    } else {
+                                        viewModel.selectCategory(category)
+                                    }
+                                },
+                                label = { Text(category) }
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        "Recent Screenshots",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
+
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        contentPadding = PaddingValues(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        items(state.notes, key = { it.id }) { note ->
+                            ScreenshotCard(note = note, onClick = { onNavigateToDetail(note.id) })
+                        }
+                    }
+                }
+            }
+            is UiState.Error -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("Error: ${state.message}")
+                }
             }
         }
     }

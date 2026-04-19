@@ -5,7 +5,7 @@ plugins {
     alias(libs.plugins.org.jetbrains.kotlin.plugin.compose)
 }
 
-extensions.configure<ApplicationExtension> {
+android {
     namespace = "com.snapnote"
     compileSdk = 36
 
@@ -23,18 +23,21 @@ extensions.configure<ApplicationExtension> {
     }
 
     buildTypes {
-        getByName("release") {
+        release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+
     buildFeatures {
         compose = true
     }
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"

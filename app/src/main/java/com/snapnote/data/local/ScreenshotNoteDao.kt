@@ -8,8 +8,11 @@ interface ScreenshotNoteDao {
     @Query("SELECT * FROM screenshots ORDER BY dateAdded DESC")
     fun getAllNotes(): Flow<List<ScreenshotNoteEntity>>
 
-    @Query("SELECT * FROM screenshots WHERE extractedText LIKE '%' || :query || '%' OR tags LIKE '%' || :query || '%' OR category LIKE '%' || :query || '%'")
+    @Query("SELECT * FROM screenshots WHERE extractedText LIKE '%' || :query || '%' OR tags LIKE '%' || :query || '%' OR category LIKE '%' || :query || '%' ORDER BY dateAdded DESC")
     fun searchNotes(query: String): Flow<List<ScreenshotNoteEntity>>
+
+    @Query("SELECT * FROM screenshots WHERE category = :category ORDER BY dateAdded DESC")
+    fun searchNotesByCategory(category: String): Flow<List<ScreenshotNoteEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertNote(note: ScreenshotNoteEntity)
