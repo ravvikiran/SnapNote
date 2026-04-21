@@ -86,6 +86,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     processingLimiter.acquire()
                     try {
                         processScreenshot(uri)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error processing screenshot: $uri", e)
                     } finally {
                         processingLimiter.release()
                     }

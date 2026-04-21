@@ -32,9 +32,9 @@ fun DetailScreen(
         (uiState as? UiState.Success)?.notes?.find { it.id == noteId }
     }
     var isEditing by remember(noteId) { mutableStateOf(false) }
-    var editedText by remember(note?.extractedText) { mutableStateOf(note?.extractedText ?: "") }
-    var editedTags by remember(note?.tags) { mutableStateOf(note?.tags ?: "") }
-    var editedCategory by remember(note?.category) { mutableStateOf(note?.category ?: "") }
+    var editedText by remember(note?.extractedText) { mutableStateOf(note?.extractedText?.takeIf { it.isNotEmpty() } ?: "") }
+    var editedTags by remember(note?.tags) { mutableStateOf(note?.tags?.takeIf { it.isNotEmpty() } ?: "") }
+    var editedCategory by remember(note?.category) { mutableStateOf(note?.category?.takeIf { it.isNotEmpty() } ?: "") }
     var showValidationError by remember { mutableStateOf(false) }
     var showDeleteConfirmation by remember { mutableStateOf(false) }
 

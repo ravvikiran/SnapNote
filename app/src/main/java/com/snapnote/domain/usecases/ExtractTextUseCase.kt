@@ -18,23 +18,31 @@ class ExtractTextUseCase(private val context: Context) {
 
     suspend fun execute(imageUri: Uri): String = withContext(Dispatchers.IO) {
         var bitmap: Bitmap? = null
-        val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+        var inputImage: InputImage? = null
         
         return@withContext try {
             bitmap = loadBitmap(imageUri)
             if (bitmap != null) {
-                val inputImage = InputImage.fromBitmap(bitmap, 0)
-                val result = recognizer.process(inputImage).await()
-                result.text
+                // Create InputImage and TextRecognizer only after bitmap is loaded to avoid resource leaks
+                inputImage = InputImage.fromBitmap(bitmap, 0)
+                val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+                
+                try {
+                    val result = recognizer.process(inputImage).await()
+                    result.text
+                } finally {
+                    // Properly close the recognizer after use
+                    recognizer.close()
+                }
             } else {
                 ""
             }
         } catch (e: Exception) {
-            Log.e("ExtractTextUseCase", "Error extracting text: ${e.javaClass.simpleName}")
+            Log.e("ExtractTextUseCase", "Error extracting text: ${e.javaClass.simpleName}: ${e.message}")
             ""
         } finally {
+            // Clean up bitmap - InputImage doesn't hold a reference, so no need to close it separately
             bitmap?.recycle()
-            recognizer.close()
         }
     }
 
