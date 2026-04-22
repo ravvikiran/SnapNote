@@ -11,7 +11,9 @@ import com.snapnote.data.repository.ScreenshotNoteRepositoryImpl
 import com.snapnote.domain.models.ScreenshotNote
 import com.snapnote.domain.usecases.ExtractTextUseCase
 import com.snapnote.domain.usecases.SuggestTagsUseCase
+import com.snapnote.util.ScreenshotNoteMapper
 import com.snapnote.utils.ScreenshotScanner
+import com.snapnote.util.Constants
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -35,7 +37,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val screenshotScanner = ScreenshotScanner(application)
     
     // Limit concurrent screenshot processing to prevent OOM
-    private val processingLimiter = Semaphore(4)
+    private val processingLimiter = Semaphore(Constants.MAX_CONCURRENT_PROCESSING)
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
@@ -56,17 +58,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
             noteFlow
         }
-        .debounce(300)
+        .debounce(Constants.SEARCH_DEBOUNCE_MS)
         .flatMapLatest { it }
         .map { notes -> 
-            UiState.Success(notes.map { it.toEntity() }) as UiState 
+            UiState.Success(notes.map { ScreenshotNoteMapper.domainToEntity(it) }) as UiState 
         }
         .onStart { emit(UiState.Loading) }
         .catch { e -> emit(UiState.Error(e.message ?: "Unknown error")) }
         .flowOn(Dispatchers.IO)
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
+            started = SharingStarted.WhileSubscribed(Constants.VIEWMODEL_TIMEOUT_MS),
             initialValue = UiState.Loading
         )
 
@@ -81,15 +83,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun scanExistingScreenshots() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                val uris = screenshotScanner.getRecentScreenshots()
+                val uris = screenshotScanner.getRecentScreenshots(Constants.MAX_SCREENSHOTS_TO_SCAN)
                 uris.forEach { uri ->
-                    processingLimiter.acquire()
                     try {
-                        processScreenshot(uri)
+                        processingLimiter.acquire()
+                        try {
+                            processScreenshot(uri)
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Error processing screenshot: $uri", e)
+                        } finally {
+                            processingLimiter.release()
+                        }
                     } catch (e: Exception) {
-                        Log.e(TAG, "Error processing screenshot: $uri", e)
-                    } finally {
-                        processingLimiter.release()
+                        Log.e(TAG, "Failed to acquire processing permit for: $uri", e)
                     }
                 }
             } catch (e: Exception) {
@@ -100,48 +106,33 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private suspend fun processScreenshot(uri: Uri) {
         val path = uri.toString()
-        if (repository.getNoteByPath(path) == null) {
-            val text = extractTextUseCase.execute(uri)
-            if (text.isNotBlank()) {
-                val tags = suggestTagsUseCase.execute(text)
-                
-                val category = tags.firstOrNull()?.removePrefix("#")?.replaceFirstChar { it.uppercase() } ?: "Uncategorized"
-                
-                val note = ScreenshotNote(
-                    imagePath = path,
-                    extractedText = text,
-                    tags = tags,
-                    category = category,
-                    dateAdded = System.currentTimeMillis()
-                )
-                repository.insertNote(note)
-            }
+        // Use atomic insert with REPLACE conflict strategy; no need for pre-check
+        val text = extractTextUseCase.execute(uri)
+        if (text.isNotBlank()) {
+            val tags = suggestTagsUseCase.execute(text)
+
+            val category = tags.firstOrNull()?.removePrefix("#")?.replaceFirstChar { it.uppercase() } ?: "Uncategorized"
+
+            val note = ScreenshotNote(
+                imagePath = path,
+                extractedText = text,
+                tags = tags,
+                category = category,
+                dateAdded = System.currentTimeMillis()
+            )
+            repository.insertNote(note)
         }
     }
 
     fun updateNote(note: ScreenshotNoteEntity) {
-        val domainNote = ScreenshotNote(
-            id = note.id,
-            imagePath = note.imagePath,
-            extractedText = note.extractedText,
-            tags = note.tags.split(",").filter { it.isNotBlank() },
-            category = note.category,
-            dateAdded = note.dateAdded
-        )
+        val domainNote = ScreenshotNoteMapper.entityToDomain(note)
         viewModelScope.launch(Dispatchers.IO) {
             repository.insertNote(domainNote)
         }
     }
 
     fun deleteNote(note: ScreenshotNoteEntity) {
-        val domainNote = ScreenshotNote(
-            id = note.id,
-            imagePath = note.imagePath,
-            extractedText = note.extractedText,
-            tags = note.tags.split(",").filter { it.isNotBlank() },
-            category = note.category,
-            dateAdded = note.dateAdded
-        )
+        val domainNote = ScreenshotNoteMapper.entityToDomain(note)
         viewModelScope.launch(Dispatchers.IO) {
             repository.deleteNote(domainNote)
         }

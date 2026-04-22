@@ -9,9 +9,11 @@ import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+import com.snapnote.util.Constants
+
 class ScreenshotScanner(private val context: Context) {
 
-    suspend fun getRecentScreenshots(limit: Int = 50): List<Uri> = withContext(Dispatchers.IO) {
+    suspend fun getRecentScreenshots(limit: Int = Constants.MAX_SCREENSHOTS_TO_SCAN): List<Uri> = withContext(Dispatchers.IO) {
         val screenshots = mutableListOf<Uri>()
 
         val projection = arrayOf(

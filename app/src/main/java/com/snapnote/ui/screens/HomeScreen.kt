@@ -2,6 +2,7 @@ package com.snapnote.ui.screens
 
 import android.Manifest
 import android.os.Build
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -22,14 +23,30 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.snapnote.R
 import com.snapnote.data.local.ScreenshotNoteEntity
 import com.snapnote.presentation.MainViewModel
 import com.snapnote.presentation.UiState
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
+import android.app.Activity
+import androidx.core.app.ActivityCompat
+
+// Helper to retrieve Activity from Context
+fun Context.findActivity(): Activity? {
+    var context = this
+    while (context is android.content.ContextWrapper) {
+        if (context is Activity) return context
+        context = context.baseContext
+    }
+    return null
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,6 +61,7 @@ fun HomeScreen(
     val selectedCategory by viewModel.selectedCategory.collectAsState()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     
     val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         Manifest.permission.READ_MEDIA_IMAGES
@@ -52,17 +70,53 @@ fun HomeScreen(
     }
 
     val snackbarHostState = remember { SnackbarHostState() }
+    var showPermissionRationale by remember { mutableStateOf(false) }
 
-    val launcher = rememberLauncherForActivityResult(
+    // Single permission launcher used throughout
+    val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
             viewModel.scanExistingScreenshots()
         } else {
             scope.launch {
-                snackbarHostState.showSnackbar("Permission required to scan screenshots")
+                snackbarHostState.showSnackbar(context.getString(R.string.permission_denied_message))
             }
         }
+    }
+
+    // Handle permission request with rationale
+    fun requestPermission() {
+        val activity = context.findActivity()
+        if (activity != null && !ActivityCompat.shouldShowRequestPermissionRationale(activity, permission)) {
+            // Need to show rationale dialog
+            showPermissionRationale = true
+        } else {
+            // Direct request (first time or already denied with "Don't ask again")
+            permissionLauncher.launch(permission)
+        }
+    }
+
+    // Permission rationale dialog
+    if (showPermissionRationale) {
+        AlertDialog(
+            onDismissRequest = { showPermissionRationale = false },
+            title = { Text(stringResource(R.string.permission_rationale_title)) },
+            text = { Text(stringResource(R.string.permission_rationale_message)) },
+            confirmButton = {
+                Button(onClick = {
+                    showPermissionRationale = false
+                    permissionLauncher.launch(permission)
+                }) {
+                    Text(stringResource(R.string.allow))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPermissionRationale = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
     }
 
     ModalNavigationDrawer(
@@ -72,14 +126,14 @@ fun HomeScreen(
                 Spacer(Modifier.height(12.dp))
                 NavigationDrawerItem(
                     icon = { Icon(Icons.Default.Home, contentDescription = null) },
-                    label = { Text("Home") },
+                    label = { Text(stringResource(R.string.menu_home)) },
                     selected = true,
                     onClick = { scope.launch { drawerState.close() } },
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                 )
                 NavigationDrawerItem(
                     icon = { Icon(Icons.Default.Info, contentDescription = null) },
-                    label = { Text("User Manual") },
+                    label = { Text(stringResource(R.string.menu_manual)) },
                     selected = false,
                     onClick = { 
                         scope.launch { drawerState.close() }
@@ -89,7 +143,7 @@ fun HomeScreen(
                 )
                 NavigationDrawerItem(
                     icon = { Icon(Icons.Default.Settings, contentDescription = null) },
-                    label = { Text("Settings") },
+                    label = { Text(stringResource(R.string.menu_settings)) },
                     selected = false,
                     onClick = { 
                         scope.launch { drawerState.close() }
@@ -100,70 +154,77 @@ fun HomeScreen(
             }
         }
     ) {
-        Scaffold(
-            snackbarHost = { SnackbarHost(snackbarHostState) },
-            topBar = {
-                CenterAlignedTopAppBar(
-                    title = { Text("SnapNote") },
-                    navigationIcon = {
-                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(Icons.Default.Menu, contentDescription = "Menu")
+            Scaffold(
+                snackbarHost = { SnackbarHost(snackbarHostState) },
+                topBar = {
+                    CenterAlignedTopAppBar(
+                        title = { Text(stringResource(R.string.home_title)) },
+                        navigationIcon = {
+                            IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                                Icon(Icons.Default.Menu, contentDescription = stringResource(R.string.menu_icon_description))
+                            }
                         }
-                    }
-                )
-            }
-        ) { padding ->
+                    )
+                }
+            ) { padding ->
                 SearchContent(
                     viewModel = viewModel,
                     searchQuery = searchQuery,
                     selectedCategory = selectedCategory,
                     onNavigateToDetail = onNavigateToDetail,
-                    uiState = uiState
+                    uiState = uiState,
+                    onRequestPermission = { requestPermission() }
                 )
         }
     }
 }
 
-@Composable
-fun ScreenshotCard(note: ScreenshotNoteEntity, onClick: () -> Unit) {
-    ElevatedCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(220.dp)
-            .clickable(onClick = onClick),
-        shape = MaterialTheme.shapes.medium
-    ) {
-        Column {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                contentAlignment = Alignment.Center
-            ) {
-                AsyncImage(
-                    model = note.imagePath,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .fillMaxHeight(),
-                    contentScale = ContentScale.Crop
-                )
-            }
-            Column(modifier = Modifier.padding(8.dp)) {
-                Text(
-                    text = note.category,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    text = note.extractedText.take(40),
-                    style = MaterialTheme.typography.bodySmall,
-                    maxLines = 2
-                )
-            }
-        }
-    }
-}
+ @Composable
+ fun ScreenshotCard(note: ScreenshotNoteEntity, onClick: () -> Unit) {
+     ElevatedCard(
+         modifier = Modifier
+             .fillMaxWidth()
+             .height(220.dp)
+             .clickable(onClick = onClick),
+         shape = MaterialTheme.shapes.medium
+     ) {
+         Column {
+             Box(
+                 modifier = Modifier
+                     .fillMaxWidth()
+                     .weight(1f),
+                 contentAlignment = Alignment.Center
+             ) {
+                 AsyncImage(
+                     model = ImageRequest.Builder(LocalContext.current)
+                         .data(note.imagePath)
+                         .crossfade(true)
+                         .build(),
+                     contentDescription = null,
+                     modifier = Modifier
+                         .fillMaxWidth()
+                         .fillMaxHeight(),
+                     contentScale = ContentScale.Crop,
+                     onError = {
+                         Log.e("ScreenshotCard", "Failed to load image: ${note.imagePath}")
+                     }
+                 )
+             }
+             Column(modifier = Modifier.padding(8.dp)) {
+                 Text(
+                     text = note.category,
+                     style = MaterialTheme.typography.labelSmall,
+                     color = MaterialTheme.colorScheme.primary
+                 )
+                 Text(
+                     text = note.extractedText.take(40),
+                     style = MaterialTheme.typography.bodySmall,
+                     maxLines = 2
+                 )
+             }
+         }
+     }
+ }
 
 @Composable
 private fun SearchContent(
@@ -171,22 +232,10 @@ private fun SearchContent(
     searchQuery: String,
     selectedCategory: String?,
     onNavigateToDetail: (Int) -> Unit,
-    uiState: UiState
+    uiState: UiState,
+    onRequestPermission: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
-    val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        Manifest.permission.READ_MEDIA_IMAGES
-    } else {
-        Manifest.permission.READ_EXTERNAL_STORAGE
-    }
-
-    val launcher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            viewModel.scanExistingScreenshots()
-        }
-    }
 
     Column(
         modifier = Modifier
@@ -199,20 +248,20 @@ private fun SearchContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            placeholder = { Text("Search text, tags, etc.") },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+            placeholder = { Text(stringResource(R.string.search_placeholder)) },
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(R.string.search_icon_description)) },
             shape = MaterialTheme.shapes.medium,
             singleLine = true
         )
 
         Button(
-            onClick = { launcher.launch(permission) },
+            onClick = { requestPermission() },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
             shape = MaterialTheme.shapes.medium
         ) {
-            Text("Scan Existing Screenshots")
+            Text(stringResource(R.string.scan_button))
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -226,7 +275,7 @@ private fun SearchContent(
             is UiState.Success -> {
                 if (state.notes.isEmpty()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("No screenshots found. Try scanning!")
+                        Text(stringResource(R.string.no_screenshots))
                     }
                 } else {
                     // Categories
@@ -253,7 +302,7 @@ private fun SearchContent(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        "Recent Screenshots",
+                        stringResource(R.string.recent_screenshots),
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                     )
@@ -273,7 +322,7 @@ private fun SearchContent(
             }
             is UiState.Error -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Error: ${state.message}")
+                    Text(stringResource(R.string.error_prefix) + " " + state.message)
                 }
             }
         }

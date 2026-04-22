@@ -1,24 +1,27 @@
 package com.snapnote.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.snapnote.R
 import com.snapnote.data.local.ScreenshotNoteEntity
 import com.snapnote.presentation.MainViewModel
 import com.snapnote.presentation.UiState
+import com.snapnote.util.Constants
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,10 +44,10 @@ fun DetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (isEditing) "Edit Note" else "Note Detail") },
+                title = { Text(if (isEditing) stringResource(R.string.edit_note) else stringResource(R.string.note_detail)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
                 actions = {
@@ -63,14 +66,14 @@ fun DetailScreen(
                                     isEditing = false
                                 }
                             }) {
-                                Icon(Icons.Filled.Check, contentDescription = "Save")
+                                Icon(Icons.Filled.Check, contentDescription = stringResource(R.string.save))
                             }
                         } else {
                             IconButton(onClick = { isEditing = true }) {
-                                Icon(Icons.Filled.Edit, contentDescription = "Edit")
+                                Icon(Icons.Filled.Edit, contentDescription = stringResource(R.string.edit))
                             }
                             IconButton(onClick = { showDeleteConfirmation = true }) {
-                                Icon(Icons.Filled.Delete, contentDescription = "Delete")
+                                Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.delete))
                             }
                         }
                     }
@@ -80,7 +83,7 @@ fun DetailScreen(
     ) { padding ->
         if (note == null) {
             Box(modifier = Modifier.fillMaxSize().padding(padding)) {
-                Text("Note not found")
+                Text(stringResource(R.string.note_not_found))
             }
         } else {
             Column(
@@ -91,30 +94,43 @@ fun DetailScreen(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                AsyncImage(
-                    model = note.imagePath,
-                    contentDescription = null,
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(400.dp),
-                    contentScale = ContentScale.Fit
-                )
+                    contentAlignment = Alignment.Center
+                ) {
+                    AsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(note.imagePath)
+                            .crossfade(true)
+                            .build(),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .fillMaxHeight(),
+                        contentScale = ContentScale.Fit,
+                        onError = {
+                            Log.e("DetailScreen", "Image failed to load: ${note.imagePath}")
+                        }
+                    )
+                }
 
-                Text("Extracted Text", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.extracted_text), style = MaterialTheme.typography.titleMedium)
                 
                 if (isEditing) {
                     OutlinedTextField(
                         value = editedText,
                         onValueChange = { 
-                            if (it.length <= 5000) {
+                            if (it.length <= Constants.MAX_TEXT_LENGTH) {
                                 editedText = it
                             }
                         },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(150.dp),
-                        label = { Text("Edit text") },
-                        supportingText = { Text("${editedText.length}/5000") },
+                        label = { Text(stringResource(R.string.edit_text_label)) },
+                        supportingText = { Text("${editedText.length}/${Constants.MAX_TEXT_LENGTH}") },
                         isError = showValidationError && editedText.isEmpty()
                     )
                 } else {
@@ -131,18 +147,51 @@ fun DetailScreen(
                     }
                 }
 
-                Text("Tags", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.tags), style = MaterialTheme.typography.titleMedium)
                 if (isEditing) {
                     OutlinedTextField(
                         value = editedTags,
                         onValueChange = { 
-                            if (it.length <= 500) {
+                            if (it.length <= Constants.MAX_TAGS_LENGTH) {
                                 editedTags = it
                             }
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Comma separated tags") },
-                        supportingText = { Text("${editedTags.length}/500") }
+                        label = { Text(stringResource(R.string.comma_separated_tags)) },
+                        supportingText = { Text("${editedTags.length}/${Constants.MAX_TAGS_LENGTH}") }
+                    )
+                } else {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        val tags = note.tags.split(",").filter { it.isNotBlank() }.map { it.trim() }
+                        if (tags.isEmpty()) {
+                            Text(stringResource(R.string.no_tags), style = MaterialTheme.typography.bodySmall)
+                        } else {
+                            tags.forEach { tag ->
+                                val displayTag = if (tag.startsWith("#")) tag else "#$tag"
+                                AssistChip(onClick = {}, label = { Text(displayTag) })
+                            }
+                        }
+                    }
+                }
+
+                Text(stringResource(R.string.category), style = MaterialTheme.typography.titleMedium)
+                if (isEditing) {
+                    OutlinedTextField(
+                        value = editedCategory,
+                        onValueChange = { 
+                            if (it.length <= Constants.MAX_CATEGORY_LENGTH) {
+                                editedCategory = it
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text(stringResource(R.string.category_label)) },
+                        supportingText = { Text("${editedCategory.length}/${Constants.MAX_CATEGORY_LENGTH}") },
+                        isError = showValidationError && editedCategory.isEmpty()
                     )
                 } else {
                     Row(
@@ -188,7 +237,7 @@ fun DetailScreen(
                         color = MaterialTheme.colorScheme.errorContainer
                     ) {
                         Text(
-                            "Text and Category cannot be empty",
+                            stringResource(R.string.validation_error),
                             modifier = Modifier.padding(12.dp),
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodySmall
@@ -202,15 +251,27 @@ fun DetailScreen(
     if (showDeleteConfirmation) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirmation = false },
-            title = { Text("Delete Note") },
-            text = { Text("Are you sure you want to delete this note? This action cannot be undone.") },
+            title = { Text(stringResource(R.string.delete_confirmation)) },
+            text = { Text(stringResource(R.string.delete_message)) },
             confirmButton = {
                 Button(
                     onClick = {
                         showDeleteConfirmation = false
-                        viewModel.deleteNote(note!!)
+                        val currentNote = (uiState as? UiState.Success)?.notes?.find { it.id == noteId }
+                        currentNote?.let { viewModel.deleteNote(it) }
                         onNavigateBack()
                     }
+                ) {
+                    Text(stringResource(R.string.delete))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirmation = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
                 ) {
                     Text("Delete")
                 }

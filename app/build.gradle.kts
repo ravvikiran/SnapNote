@@ -87,6 +87,9 @@ dependencies {
     // Coil for image loading
     implementation(libs.coil.compose)
     
+    // DataStore for preferences
+    implementation(libs.androidx.datastore.preferences)
+    
     // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

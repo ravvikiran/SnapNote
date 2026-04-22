@@ -53,9 +53,23 @@
     <string name="menu">Menu</string>
     <string name="back">Back</string>
     <string name="info">Info</string>
+    <string name="menu_home">Home</string>
+    <string name="menu_manual">User Manual</string>
+    <string name="menu_settings">Settings</string>
+    <string name="menu_icon_description">Menu</string>
+    <string name="search_icon_description">Search</string>
+    <string name="loading_indicator_description">Loading</string>
     
     <!-- Errors -->
     <string name="error_prefix">Error: </string>
     <string name="image_load_error">Failed to load image</string>
     <string name="unknown_error">Unknown error</string>
+    <string name="permission_denied_message">Permission required to scan screenshots</string>
+    <string name="permission_rationale_title">Permission Required</string>
+    <string name="permission_rationale_message">SnapNote needs access to your photos to scan and import existing screenshots. This permission is only used for reading images.</string>
+    <string name="allow">Allow</string>
+    
+    <!-- Detail Screen Icons -->
+    <string name="save">Save</string>
+    <string name="edit">Edit</string>
 </resources>

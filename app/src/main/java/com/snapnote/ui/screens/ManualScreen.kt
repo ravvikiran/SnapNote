@@ -8,8 +8,10 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.snapnote.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -17,10 +19,10 @@ fun ManualScreen(onNavigateBack: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("User Manual") },
+                title = { Text(stringResource(R.string.user_manual)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 }
             )
@@ -34,29 +36,29 @@ fun ManualScreen(onNavigateBack: () -> Unit) {
                 .verticalScroll(rememberScrollState())
         ) {
             ManualSection(
-                title = "1. Scanning Screenshots",
-                content = "To start, click the 'Scan Existing Screenshots' button on the home screen. The app will ask for permission to access your photos. Once granted, it will analyze your screenshots and extract text from them."
+                title = stringResource(R.string.manual_section_1_title),
+                content = stringResource(R.string.manual_section_1_content)
             )
             
             ManualSection(
-                title = "2. Searching",
-                content = "Use the search bar at the top of the home screen to find specific screenshots. You can search for text found within the image, tags, or categories."
+                title = stringResource(R.string.manual_section_2_title),
+                content = stringResource(R.string.manual_section_2_content)
             )
             
             ManualSection(
-                title = "3. Navigation",
-                content = "Click on any screenshot card to view its details, including the full extracted text and assigned tags. Use the sidebar (drawer) to switch between the Home screen and this Manual."
+                title = stringResource(R.string.manual_section_3_title),
+                content = stringResource(R.string.manual_section_3_content)
             )
 
             ManualSection(
-                title = "4. Dark Mode",
-                content = "SnapNote supports system-wide dark mode. It will automatically adjust its theme based on your device settings."
+                title = stringResource(R.string.manual_section_4_title),
+                content = stringResource(R.string.manual_section_4_content)
             )
             
             Spacer(modifier = Modifier.height(32.dp))
             
             Text(
-                "Enjoy using SnapNote!",
+                stringResource(R.string.enjoy_snapnote),
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Bold
             )
