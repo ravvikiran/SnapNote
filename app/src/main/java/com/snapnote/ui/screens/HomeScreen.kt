@@ -279,21 +279,21 @@ private fun SearchContent(
                     }
                 } else {
                     // Categories
-                    val categories = listOf("All") + state.notes.map { it.category }.distinct()
+                    val categories = listOf(stringResource(R.string.all_categories_filter)) + state.notes.map { it.category }.distinct()
                     LazyRow(
                         contentPadding = PaddingValues(horizontal = 16.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         items(categories) { category ->
-                            FilterChip(
-                                selected = (if (category == "All") selectedCategory == null else category == selectedCategory),
-                                onClick = {
-                                    if (category == "All") {
-                                        viewModel.selectCategory(null)
-                                    } else {
-                                        viewModel.selectCategory(category)
-                                    }
-                                },
+FilterChip(
+                                    selected = (if (category == stringResource(R.string.all_categories_filter)) selectedCategory == null else category == selectedCategory),
+                                    onClick = {
+                                        if (category == stringResource(R.string.all_categories_filter)) {
+                                            viewModel.selectCategory(null)
+                                        } else {
+                                            viewModel.selectCategory(category)
+                                        }
+                                    },
                                 label = { Text(category) }
                             )
                         }
@@ -322,7 +322,7 @@ private fun SearchContent(
             }
             is UiState.Error -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(stringResource(R.string.error_prefix) + " " + state.message)
+                    Text(stringResource(R.string.error_loading_message, state.message ?: "Unknown error"))
                 }
             }
         }
