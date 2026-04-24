@@ -83,7 +83,7 @@ fun DetailScreen(
     ) { padding ->
         if (note == null) {
             Box(modifier = Modifier.fillMaxSize().padding(padding)) {
-                Text(stringResource(R.string.note_not_found_message))
+                Text(stringResource(R.string.note_not_found))
             }
         } else {
             Column(
@@ -116,8 +116,8 @@ fun DetailScreen(
                     )
                 }
 
-                Text(stringResource(R.string.extracted_text_label), style = MaterialTheme.typography.titleMedium)
-
+                Text(stringResource(R.string.extracted_text), style = MaterialTheme.typography.titleMedium)
+                
                 if (isEditing) {
                     OutlinedTextField(
                         value = editedText,
@@ -147,7 +147,7 @@ fun DetailScreen(
                     }
                 }
 
-                Text(stringResource(R.string.tags_label), style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.tags), style = MaterialTheme.typography.titleMedium)
                 if (isEditing) {
                     OutlinedTextField(
                         value = editedTags,
@@ -169,7 +169,7 @@ fun DetailScreen(
                     ) {
                         val tags = note.tags.split(",").filter { it.isNotBlank() }.map { it.trim() }
                         if (tags.isEmpty()) {
-                            Text(stringResource(R.string.no_tags_message), style = MaterialTheme.typography.bodySmall)
+                            Text(stringResource(R.string.no_tags), style = MaterialTheme.typography.bodySmall)
                         } else {
                             tags.forEach { tag ->
                                 val displayTag = if (tag.startsWith("#")) tag else "#$tag"
@@ -179,7 +179,7 @@ fun DetailScreen(
                     }
                 }
 
-                Text(stringResource(R.string.category_label), style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.category), style = MaterialTheme.typography.titleMedium)
                 if (isEditing) {
                     OutlinedTextField(
                         value = editedCategory,
@@ -202,7 +202,7 @@ fun DetailScreen(
                     ) {
                         val tags = note.tags.split(",").filter { it.isNotBlank() }.map { it.trim() }
                         if (tags.isEmpty()) {
-                            Text(stringResource(R.string.no_tags_message), style = MaterialTheme.typography.bodySmall)
+                            Text("No tags", style = MaterialTheme.typography.bodySmall)
                         } else {
                             tags.forEach { tag ->
                                 val displayTag = if (tag.startsWith("#")) tag else "#$tag"
@@ -212,6 +212,24 @@ fun DetailScreen(
                     }
                 }
 
+                Text("Category", style = MaterialTheme.typography.titleMedium)
+                if (isEditing) {
+                    OutlinedTextField(
+                        value = editedCategory,
+                        onValueChange = { 
+                            if (it.length <= 100) {
+                                editedCategory = it
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Category") },
+                        supportingText = { Text("${editedCategory.length}/100") },
+                        isError = showValidationError && editedCategory.isEmpty()
+                    )
+                } else {
+                    AssistChip(onClick = {}, label = { Text(note.category) })
+                }
+
                 if (showValidationError) {
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
@@ -219,7 +237,7 @@ fun DetailScreen(
                         color = MaterialTheme.colorScheme.errorContainer
                     ) {
                         Text(
-                            stringResource(R.string.validation_error_message),
+                            stringResource(R.string.validation_error),
                             modifier = Modifier.padding(12.dp),
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodySmall
@@ -233,8 +251,8 @@ fun DetailScreen(
     if (showDeleteConfirmation) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirmation = false },
-            title = { Text(stringResource(R.string.delete_confirmation_title)) },
-            text = { Text(stringResource(R.string.delete_confirmation_message)) },
+            title = { Text(stringResource(R.string.delete_confirmation)) },
+            text = { Text(stringResource(R.string.delete_message)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -244,14 +262,26 @@ fun DetailScreen(
                         onNavigateBack()
                     }
                 ) {
-                    Text(stringResource(R.string.delete_confirm_button))
+                    Text(stringResource(R.string.delete))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteConfirmation = false }) {
-                    Text(stringResource(R.string.delete_cancel_button))
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirmation = false }) {
+                    Text("Cancel")
                 }
             }
         )
     }
 }
+
