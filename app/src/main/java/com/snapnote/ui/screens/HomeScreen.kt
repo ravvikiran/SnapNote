@@ -113,7 +113,7 @@ fun HomeScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showPermissionRationale = false }) {
-                    Text(stringResource(R.string.cancel))
+                    Text(stringResource(R.string.delete_cancel_button))
                 }
             }
         )
@@ -275,7 +275,7 @@ private fun SearchContent(
             is UiState.Success -> {
                 if (state.notes.isEmpty()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(stringResource(R.string.no_screenshots))
+                        Text(stringResource(R.string.no_screenshots_message))
                     }
                 } else {
                     // Categories
@@ -302,7 +302,7 @@ private fun SearchContent(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        stringResource(R.string.recent_screenshots),
+                        stringResource(R.string.recent_screenshots_title),
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                     )
@@ -322,7 +322,7 @@ private fun SearchContent(
             }
             is UiState.Error -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(stringResource(R.string.error_prefix) + " " + state.message)
+                    Text(stringResource(R.string.error_loading_message, state.message ?: "Unknown error"))
                 }
             }
         }
