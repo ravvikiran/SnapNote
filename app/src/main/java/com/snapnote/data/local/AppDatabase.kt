@@ -5,6 +5,11 @@ import androidx.room.Database
 import androidx.room.Migration
 import androidx.room.Room
 import androidx.room.RoomDatabase
+<<<<<<< HEAD
+=======
+import androidx.room.migration.Migration
+import androidx.room.util.SchemaMigrationUtil
+>>>>>>> 11e59009f9083a265ca217bdc4d9e1adeeb9dd2f
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(entities = [ScreenshotNoteEntity::class], version = 2, exportSchema = true)

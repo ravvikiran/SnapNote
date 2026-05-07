@@ -111,7 +111,7 @@ fun HomeScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showPermissionRationale = false }) {
-                    Text(stringResource(R.string.cancel))
+                    Text(stringResource(R.string.delete_cancel_button))
                 }
             }
         )
@@ -152,6 +152,7 @@ fun HomeScreen(
             }
         }
     ) {
+<<<<<<< HEAD
         Scaffold(
             snackbarHost = { SnackbarHost(snackbarHostState) },
             topBar = {
@@ -162,6 +163,149 @@ fun HomeScreen(
                             Icon(
                                 Icons.Default.Menu,
                                 contentDescription = stringResource(R.string.menu_icon_description)
+=======
+            Scaffold(
+                snackbarHost = { SnackbarHost(snackbarHostState) },
+                topBar = {
+                    CenterAlignedTopAppBar(
+                        title = { Text(stringResource(R.string.home_title)) },
+                        navigationIcon = {
+                            IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                                Icon(Icons.Default.Menu, contentDescription = stringResource(R.string.menu_icon_description))
+                            }
+                        }
+                    )
+                }
+            ) { padding ->
+                SearchContent(
+                    viewModel = viewModel,
+                    searchQuery = searchQuery,
+                    selectedCategory = selectedCategory,
+                    onNavigateToDetail = onNavigateToDetail,
+                    uiState = uiState,
+                    onRequestPermission = { requestPermission() }
+                )
+        }
+    }
+}
+
+ @Composable
+ fun ScreenshotCard(note: ScreenshotNoteEntity, onClick: () -> Unit) {
+     ElevatedCard(
+         modifier = Modifier
+             .fillMaxWidth()
+             .height(220.dp)
+             .clickable(onClick = onClick),
+         shape = MaterialTheme.shapes.medium
+     ) {
+         Column {
+             Box(
+                 modifier = Modifier
+                     .fillMaxWidth()
+                     .weight(1f),
+                 contentAlignment = Alignment.Center
+             ) {
+                 AsyncImage(
+                     model = ImageRequest.Builder(LocalContext.current)
+                         .data(note.imagePath)
+                         .crossfade(true)
+                         .build(),
+                     contentDescription = null,
+                     modifier = Modifier
+                         .fillMaxWidth()
+                         .fillMaxHeight(),
+                     contentScale = ContentScale.Crop,
+                     onError = {
+                         Log.e("ScreenshotCard", "Failed to load image: ${note.imagePath}")
+                     }
+                 )
+             }
+             Column(modifier = Modifier.padding(8.dp)) {
+                 Text(
+                     text = note.category,
+                     style = MaterialTheme.typography.labelSmall,
+                     color = MaterialTheme.colorScheme.primary
+                 )
+                 Text(
+                     text = note.extractedText.take(40),
+                     style = MaterialTheme.typography.bodySmall,
+                     maxLines = 2
+                 )
+             }
+         }
+     }
+ }
+
+@Composable
+private fun SearchContent(
+    viewModel: MainViewModel,
+    searchQuery: String,
+    selectedCategory: String?,
+    onNavigateToDetail: (Int) -> Unit,
+    uiState: UiState,
+    onRequestPermission: () -> Unit
+) {
+    val scope = rememberCoroutineScope()
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+    ) {
+        // Search Bar
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { viewModel.onSearchQueryChanged(it) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            placeholder = { Text(stringResource(R.string.search_placeholder)) },
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(R.string.search_icon_description)) },
+            shape = MaterialTheme.shapes.medium,
+            singleLine = true
+        )
+
+        Button(
+            onClick = { requestPermission() },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            shape = MaterialTheme.shapes.medium
+        ) {
+            Text(stringResource(R.string.scan_button))
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        when (val state = uiState) {
+            is UiState.Loading -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            }
+            is UiState.Success -> {
+                if (state.notes.isEmpty()) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(stringResource(R.string.no_screenshots_message))
+                    }
+                } else {
+                    // Categories
+                    val categories = listOf("All") + state.notes.map { it.category }.distinct()
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(categories) { category ->
+                            FilterChip(
+                                selected = (if (category == "All") selectedCategory == null else category == selectedCategory),
+                                onClick = {
+                                    if (category == "All") {
+                                        viewModel.selectCategory(null)
+                                    } else {
+                                        viewModel.selectCategory(category)
+                                    }
+                                },
+                                label = { Text(category) }
+>>>>>>> 11e59009f9083a265ca217bdc4d9e1adeeb9dd2f
                             )
                         }
                     }
@@ -202,12 +346,27 @@ fun HomeScreen(
                     Text(stringResource(R.string.scan_button))
                 }
 
+<<<<<<< HEAD
                 // Scan Progress Indicator
                 if (scanProgress > 0f && scanProgress < 1f) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp, vertical = 8.dp)
+=======
+                    Text(
+                        stringResource(R.string.recent_screenshots_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
+
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        contentPadding = PaddingValues(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.fillMaxSize()
+>>>>>>> 11e59009f9083a265ca217bdc4d9e1adeeb9dd2f
                     ) {
                         LinearProgressIndicator(
                             progress = { scanProgress },
@@ -221,6 +380,7 @@ fun HomeScreen(
                         )
                     }
                 }
+<<<<<<< HEAD
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -305,6 +465,12 @@ fun HomeScreen(
                             Text(stringResource(R.string.error_prefix) + " " + state.message)
                         }
                     }
+=======
+            }
+            is UiState.Error -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(stringResource(R.string.error_loading_message, state.message ?: "Unknown error"))
+>>>>>>> 11e59009f9083a265ca217bdc4d9e1adeeb9dd2f
                 }
             }
         }
