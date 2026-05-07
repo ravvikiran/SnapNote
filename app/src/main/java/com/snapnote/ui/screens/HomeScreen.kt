@@ -1,6 +1,7 @@
 package com.snapnote.ui.screens
 
 import android.Manifest
+import android.app.Activity
 import android.os.Build
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -13,10 +14,10 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -26,6 +27,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -34,12 +36,9 @@ import com.snapnote.data.local.ScreenshotNoteEntity
 import com.snapnote.presentation.MainViewModel
 import com.snapnote.presentation.UiState
 import kotlinx.coroutines.launch
-import androidx.compose.runtime.rememberCoroutineScope
-import android.app.Activity
-import androidx.core.app.ActivityCompat
 
 // Helper to retrieve Activity from Context
-fun Context.findActivity(): Activity? {
+private fun android.content.Context.findActivity(): Activity? {
     var context = this
     while (context is android.content.ContextWrapper) {
         if (context is Activity) return context
@@ -59,10 +58,11 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val selectedCategory by viewModel.selectedCategory.collectAsState()
+    val scanProgress by viewModel.scanProgress.collectAsState()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    
+
     val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         Manifest.permission.READ_MEDIA_IMAGES
     } else {
@@ -72,7 +72,6 @@ fun HomeScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     var showPermissionRationale by remember { mutableStateOf(false) }
 
-    // Single permission launcher used throughout
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -80,19 +79,18 @@ fun HomeScreen(
             viewModel.scanExistingScreenshots()
         } else {
             scope.launch {
-                snackbarHostState.showSnackbar(context.getString(R.string.permission_denied_message))
+                snackbarHostState.showSnackbar(
+                    context.getString(R.string.permission_denied_message)
+                )
             }
         }
     }
 
-    // Handle permission request with rationale
     fun requestPermission() {
         val activity = context.findActivity()
-        if (activity != null && !ActivityCompat.shouldShowRequestPermissionRationale(activity, permission)) {
-            // Need to show rationale dialog
+        if (activity != null && ActivityCompat.shouldShowRequestPermissionRationale(activity, permission)) {
             showPermissionRationale = true
         } else {
-            // Direct request (first time or already denied with "Don't ask again")
             permissionLauncher.launch(permission)
         }
     }
@@ -135,9 +133,9 @@ fun HomeScreen(
                     icon = { Icon(Icons.Default.Info, contentDescription = null) },
                     label = { Text(stringResource(R.string.menu_manual)) },
                     selected = false,
-                    onClick = { 
+                    onClick = {
                         scope.launch { drawerState.close() }
-                        onNavigateToManual() 
+                        onNavigateToManual()
                     },
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                 )
@@ -145,185 +143,216 @@ fun HomeScreen(
                     icon = { Icon(Icons.Default.Settings, contentDescription = null) },
                     label = { Text(stringResource(R.string.menu_settings)) },
                     selected = false,
-                    onClick = { 
+                    onClick = {
                         scope.launch { drawerState.close() }
-                        onNavigateToSettings() 
+                        onNavigateToSettings()
                     },
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                 )
             }
         }
     ) {
-            Scaffold(
-                snackbarHost = { SnackbarHost(snackbarHostState) },
-                topBar = {
-                    CenterAlignedTopAppBar(
-                        title = { Text(stringResource(R.string.home_title)) },
-                        navigationIcon = {
-                            IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                                Icon(Icons.Default.Menu, contentDescription = stringResource(R.string.menu_icon_description))
+        Scaffold(
+            snackbarHost = { SnackbarHost(snackbarHostState) },
+            topBar = {
+                CenterAlignedTopAppBar(
+                    title = { Text(stringResource(R.string.home_title)) },
+                    navigationIcon = {
+                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                            Icon(
+                                Icons.Default.Menu,
+                                contentDescription = stringResource(R.string.menu_icon_description)
+                            )
+                        }
+                    }
+                )
+            }
+        ) { padding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+            ) {
+                // Search Bar
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { viewModel.onSearchQueryChanged(it) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    placeholder = { Text(stringResource(R.string.search_placeholder)) },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = stringResource(R.string.search_icon_description)
+                        )
+                    },
+                    shape = MaterialTheme.shapes.medium,
+                    singleLine = true
+                )
+
+                // Scan Button
+                Button(
+                    onClick = { requestPermission() },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    Text(stringResource(R.string.scan_button))
+                }
+
+                // Scan Progress Indicator
+                if (scanProgress > 0f && scanProgress < 1f) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                    ) {
+                        LinearProgressIndicator(
+                            progress = { scanProgress },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Scanning... ${(scanProgress * 100).toInt()}%",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                when (val state = uiState) {
+                    is UiState.Loading -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
+                    }
+
+                    is UiState.Success -> {
+                        if (state.notes.isEmpty()) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(stringResource(R.string.no_screenshots))
+                            }
+                        } else {
+                            // Category Filter Chips
+                            val categories = listOf("All") + state.notes
+                                .map { it.category }
+                                .distinct()
+                                .sorted()
+
+                            LazyRow(
+                                contentPadding = PaddingValues(horizontal = 16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                items(categories) { category ->
+                                    FilterChip(
+                                        selected = if (category == "All") {
+                                            selectedCategory == null
+                                        } else {
+                                            category == selectedCategory
+                                        },
+                                        onClick = {
+                                            if (category == "All") {
+                                                viewModel.selectCategory(null)
+                                            } else {
+                                                viewModel.selectCategory(category)
+                                            }
+                                        },
+                                        label = { Text(category) }
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Text(
+                                stringResource(R.string.recent_screenshots),
+                                style = MaterialTheme.typography.titleMedium,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                            )
+
+                            LazyVerticalGrid(
+                                columns = GridCells.Fixed(2),
+                                contentPadding = PaddingValues(16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                items(state.notes, key = { it.id }) { note ->
+                                    ScreenshotCard(
+                                        note = note,
+                                        onClick = { onNavigateToDetail(note.id) }
+                                    )
+                                }
                             }
                         }
-                    )
+                    }
+
+                    is UiState.Error -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(stringResource(R.string.error_prefix) + " " + state.message)
+                        }
+                    }
                 }
-            ) { padding ->
-                SearchContent(
-                    viewModel = viewModel,
-                    searchQuery = searchQuery,
-                    selectedCategory = selectedCategory,
-                    onNavigateToDetail = onNavigateToDetail,
-                    uiState = uiState,
-                    onRequestPermission = { requestPermission() }
-                )
+            }
         }
     }
 }
 
- @Composable
- fun ScreenshotCard(note: ScreenshotNoteEntity, onClick: () -> Unit) {
-     ElevatedCard(
-         modifier = Modifier
-             .fillMaxWidth()
-             .height(220.dp)
-             .clickable(onClick = onClick),
-         shape = MaterialTheme.shapes.medium
-     ) {
-         Column {
-             Box(
-                 modifier = Modifier
-                     .fillMaxWidth()
-                     .weight(1f),
-                 contentAlignment = Alignment.Center
-             ) {
-                 AsyncImage(
-                     model = ImageRequest.Builder(LocalContext.current)
-                         .data(note.imagePath)
-                         .crossfade(true)
-                         .build(),
-                     contentDescription = null,
-                     modifier = Modifier
-                         .fillMaxWidth()
-                         .fillMaxHeight(),
-                     contentScale = ContentScale.Crop,
-                     onError = {
-                         Log.e("ScreenshotCard", "Failed to load image: ${note.imagePath}")
-                     }
-                 )
-             }
-             Column(modifier = Modifier.padding(8.dp)) {
-                 Text(
-                     text = note.category,
-                     style = MaterialTheme.typography.labelSmall,
-                     color = MaterialTheme.colorScheme.primary
-                 )
-                 Text(
-                     text = note.extractedText.take(40),
-                     style = MaterialTheme.typography.bodySmall,
-                     maxLines = 2
-                 )
-             }
-         }
-     }
- }
-
 @Composable
-private fun SearchContent(
-    viewModel: MainViewModel,
-    searchQuery: String,
-    selectedCategory: String?,
-    onNavigateToDetail: (Int) -> Unit,
-    uiState: UiState,
-    onRequestPermission: () -> Unit
-) {
-    val scope = rememberCoroutineScope()
-
-    Column(
+fun ScreenshotCard(note: ScreenshotNoteEntity, onClick: () -> Unit) {
+    ElevatedCard(
         modifier = Modifier
-            .fillMaxSize()
+            .fillMaxWidth()
+            .height(220.dp)
+            .clickable(onClick = onClick),
+        shape = MaterialTheme.shapes.medium
     ) {
-        // Search Bar
-        OutlinedTextField(
-            value = searchQuery,
-            onValueChange = { viewModel.onSearchQueryChanged(it) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            placeholder = { Text(stringResource(R.string.search_placeholder)) },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(R.string.search_icon_description)) },
-            shape = MaterialTheme.shapes.medium,
-            singleLine = true
-        )
-
-        Button(
-            onClick = { requestPermission() },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            shape = MaterialTheme.shapes.medium
-        ) {
-            Text(stringResource(R.string.scan_button))
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        when (val state = uiState) {
-            is UiState.Loading -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
+        Column {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(note.imagePath)
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .fillMaxHeight(),
+                    contentScale = ContentScale.Crop,
+                    onError = {
+                        Log.e("ScreenshotCard", "Failed to load image: ${note.imagePath}")
+                    }
+                )
             }
-            is UiState.Success -> {
-                if (state.notes.isEmpty()) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(stringResource(R.string.no_screenshots))
-                    }
-                } else {
-                    // Categories
-                    val categories = listOf("All") + state.notes.map { it.category }.distinct()
-                    LazyRow(
-                        contentPadding = PaddingValues(horizontal = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(categories) { category ->
-                            FilterChip(
-                                selected = (if (category == "All") selectedCategory == null else category == selectedCategory),
-                                onClick = {
-                                    if (category == "All") {
-                                        viewModel.selectCategory(null)
-                                    } else {
-                                        viewModel.selectCategory(category)
-                                    }
-                                },
-                                label = { Text(category) }
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Text(
-                        stringResource(R.string.recent_screenshots),
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                    )
-
-                    LazyVerticalGrid(
-                        columns = GridCells.Fixed(2),
-                        contentPadding = PaddingValues(16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        items(state.notes, key = { it.id }) { note ->
-                            ScreenshotCard(note = note, onClick = { onNavigateToDetail(note.id) })
-                        }
-                    }
-                }
-            }
-            is UiState.Error -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(stringResource(R.string.error_prefix) + " " + state.message)
-                }
+            Column(modifier = Modifier.padding(8.dp)) {
+                Text(
+                    text = note.category,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = note.extractedText.take(40),
+                    style = MaterialTheme.typography.bodySmall,
+                    maxLines = 2
+                )
             }
         }
     }

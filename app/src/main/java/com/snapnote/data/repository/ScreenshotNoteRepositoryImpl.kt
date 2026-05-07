@@ -2,7 +2,6 @@ package com.snapnote.data.repository
 
 import android.util.Log
 import com.snapnote.data.local.ScreenshotNoteDao
-import com.snapnote.data.local.ScreenshotNoteEntity
 import com.snapnote.domain.models.ScreenshotNote
 import com.snapnote.domain.repository.ScreenshotNoteRepository
 import com.snapnote.util.ScreenshotNoteMapper
@@ -19,54 +18,57 @@ class ScreenshotNoteRepositoryImpl(
     override fun getAllNotes(): Flow<List<ScreenshotNote>> {
         return dao.getAllNotes()
             .map { entities ->
-                entities.map { entity ->
+                entities.mapNotNull { entity ->
                     try {
                         ScreenshotNoteMapper.entityToDomain(entity)
                     } catch (e: Exception) {
-                        Log.e("ScreenshotNoteRepositoryImpl", "Error converting entity to domain", e)
+                        Log.e(TAG, "Error converting entity to domain", e)
                         null
                     }
-                }.filterNotNull()
+                }
             }
             .flowOn(Dispatchers.IO)
             .catch { e ->
-                Log.e("ScreenshotNoteRepositoryImpl", "Error in getAllNotes flow", e)
+                Log.e(TAG, "Error in getAllNotes flow", e)
+                emit(emptyList())
             }
     }
 
     override fun searchNotes(query: String): Flow<List<ScreenshotNote>> {
         return dao.searchNotes(query)
             .map { entities ->
-                entities.map { entity ->
+                entities.mapNotNull { entity ->
                     try {
                         ScreenshotNoteMapper.entityToDomain(entity)
                     } catch (e: Exception) {
-                        Log.e("ScreenshotNoteRepositoryImpl", "Error converting entity to domain", e)
+                        Log.e(TAG, "Error converting entity to domain", e)
                         null
                     }
-                }.filterNotNull()
+                }
             }
             .flowOn(Dispatchers.IO)
             .catch { e ->
-                Log.e("ScreenshotNoteRepositoryImpl", "Error in searchNotes flow", e)
+                Log.e(TAG, "Error in searchNotes flow", e)
+                emit(emptyList())
             }
     }
 
     override fun searchNotesByCategory(category: String): Flow<List<ScreenshotNote>> {
         return dao.searchNotesByCategory(category)
             .map { entities ->
-                entities.map { entity ->
+                entities.mapNotNull { entity ->
                     try {
                         ScreenshotNoteMapper.entityToDomain(entity)
                     } catch (e: Exception) {
-                        Log.e("ScreenshotNoteRepositoryImpl", "Error converting entity to domain", e)
+                        Log.e(TAG, "Error converting entity to domain", e)
                         null
                     }
-                }.filterNotNull()
+                }
             }
             .flowOn(Dispatchers.IO)
             .catch { e ->
-                Log.e("ScreenshotNoteRepositoryImpl", "Error in searchNotesByCategory flow", e)
+                Log.e(TAG, "Error in searchNotesByCategory flow", e)
+                emit(emptyList())
             }
     }
 
@@ -74,7 +76,7 @@ class ScreenshotNoteRepositoryImpl(
         try {
             dao.insertNote(ScreenshotNoteMapper.domainToEntity(note))
         } catch (e: Exception) {
-            Log.e("ScreenshotNoteRepositoryImpl", "Error inserting note", e)
+            Log.e(TAG, "Error inserting note", e)
             throw e
         }
     }
@@ -83,7 +85,7 @@ class ScreenshotNoteRepositoryImpl(
         try {
             dao.deleteNote(ScreenshotNoteMapper.domainToEntity(note))
         } catch (e: Exception) {
-            Log.e("ScreenshotNoteRepositoryImpl", "Error deleting note", e)
+            Log.e(TAG, "Error deleting note", e)
             throw e
         }
     }
@@ -92,7 +94,12 @@ class ScreenshotNoteRepositoryImpl(
         return try {
             dao.getNoteByPath(path)?.let { ScreenshotNoteMapper.entityToDomain(it) }
         } catch (e: Exception) {
-            Log.e("ScreenshotNoteRepositoryImpl", "Error getting note by path", e)
+            Log.e(TAG, "Error getting note by path", e)
             null
         }
     }
+
+    companion object {
+        private const val TAG = "ScreenshotNoteRepo"
+    }
+}

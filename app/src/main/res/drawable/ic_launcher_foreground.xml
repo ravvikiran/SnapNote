@@ -4,7 +4,44 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+
+    <!-- Background circle -->
+    <path
+        android:fillColor="#D0BCFF"
+        android:pathData="M54,54m-40,0a40,40 0,1 1,80 0a40,40 0,1 1,-80 0" />
+
+    <!-- Camera body -->
+    <path
+        android:fillColor="#4A3880"
+        android:pathData="M34,42h40c2.2,0 4,1.8 4,4v22c0,2.2 -1.8,4 -4,4H34c-2.2,0 -4,-1.8 -4,-4V46c0,-2.2 1.8,-4 4,-4z" />
+
+    <!-- Camera lens -->
+    <path
+        android:fillColor="#D0BCFF"
+        android:pathData="M54,57m-10,0a10,10 0,1 1,20 0a10,10 0,1 1,-20 0" />
+
+    <!-- Camera lens inner -->
+    <path
+        android:fillColor="#4A3880"
+        android:pathData="M54,57m-6,0a6,6 0,1 1,12 0a6,6 0,1 1,-12 0" />
+
+    <!-- Camera top bump (viewfinder) -->
+    <path
+        android:fillColor="#4A3880"
+        android:pathData="M44,38h12c1,0 2,0.8 2,1.8V42H42v-2.2c0,-1 1,-1.8 2,-1.8z" />
+
+    <!-- Flash indicator -->
+    <path
+        android:fillColor="#EFB8C8"
+        android:pathData="M66,46h4v3h-4z" />
+
+    <!-- Note/text lines below camera -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M31,31h46v46h-46z" />
+        android:strokeWidth="0"
+        android:pathData="M38,74h32v2H38z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:strokeWidth="0"
+        android:pathData="M38,78h24v2H38z" />
 </vector>

@@ -10,8 +10,10 @@ import com.snapnote.ui.screens.DetailScreen
 import com.snapnote.ui.screens.HomeScreen
 import com.snapnote.ui.screens.ManualScreen
 import com.snapnote.ui.screens.SettingsScreen
+import com.snapnote.ui.screens.SplashScreen
 
 sealed class Screen(val route: String) {
+    object Splash : Screen("splash")
     object Home : Screen("home")
     object Manual : Screen("manual")
     object Settings : Screen("settings")
@@ -24,8 +26,17 @@ sealed class Screen(val route: String) {
 fun NavGraph(navController: NavHostController) {
     NavHost(
         navController = navController,
-        startDestination = Screen.Home.route
+        startDestination = Screen.Splash.route
     ) {
+        composable(Screen.Splash.route) {
+            SplashScreen(
+                onSplashFinished = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Splash.route) { inclusive = true }
+                    }
+                }
+            )
+        }
         composable(Screen.Home.route) {
             HomeScreen(
                 onNavigateToDetail = { noteId ->

@@ -13,9 +13,6 @@ import com.snapnote.R
 import com.snapnote.data.settings.SettingsDataStore
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import com.snapnote.data.settings.SettingsDataStore
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,7 +35,10 @@ fun SettingsScreen(onNavigateBack: () -> Unit) {
                 title = { Text(stringResource(R.string.settings)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.back)
+                        )
                     }
                 }
             )
@@ -65,14 +65,14 @@ fun SettingsScreen(onNavigateBack: () -> Unit) {
                 }
             )
             HorizontalDivider()
-            
+
             ListItem(
                 headlineContent = { Text(stringResource(R.string.rerun_ocr_title)) },
                 supportingContent = { Text(stringResource(R.string.rerun_ocr_description)) },
                 modifier = Modifier.padding(vertical = 8.dp)
             )
             HorizontalDivider()
-            
+
             ListItem(
                 headlineContent = { Text(stringResource(R.string.backup_title)) },
                 supportingContent = { Text(stringResource(R.string.backup_description)) },

@@ -11,9 +11,9 @@ import com.snapnote.data.repository.ScreenshotNoteRepositoryImpl
 import com.snapnote.domain.models.ScreenshotNote
 import com.snapnote.domain.usecases.ExtractTextUseCase
 import com.snapnote.domain.usecases.SuggestTagsUseCase
+import com.snapnote.util.Constants
 import com.snapnote.util.ScreenshotNoteMapper
 import com.snapnote.utils.ScreenshotScanner
-import com.snapnote.util.Constants
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -35,7 +35,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val extractTextUseCase = ExtractTextUseCase(application)
     private val suggestTagsUseCase = SuggestTagsUseCase()
     private val screenshotScanner = ScreenshotScanner(application)
-    
+
     // Limit concurrent screenshot processing to prevent OOM
     private val processingLimiter = Semaphore(Constants.MAX_CONCURRENT_PROCESSING)
 
@@ -45,23 +45,26 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _selectedCategory = MutableStateFlow<String?>(null)
     val selectedCategory: StateFlow<String?> = _selectedCategory.asStateFlow()
 
+    private val _scanProgress = MutableStateFlow(0f)
+    val scanProgress: StateFlow<Float> = _scanProgress.asStateFlow()
+
     @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
     val uiState: StateFlow<UiState> = combine(_searchQuery, _selectedCategory) { query, category ->
-            val noteFlow = if (query.isEmpty()) {
-                if (category != null) {
-                    repository.searchNotesByCategory(category)
-                } else {
-                    repository.getAllNotes()
-                }
+        val noteFlow = if (query.isEmpty()) {
+            if (category != null) {
+                repository.searchNotesByCategory(category)
             } else {
-                repository.searchNotes(query)
+                repository.getAllNotes()
             }
-            noteFlow
+        } else {
+            repository.searchNotes(query)
         }
+        noteFlow
+    }
         .debounce(Constants.SEARCH_DEBOUNCE_MS)
         .flatMapLatest { it }
-        .map { notes -> 
-            UiState.Success(notes.map { ScreenshotNoteMapper.domainToEntity(it) }) as UiState 
+        .map { notes ->
+            UiState.Success(notes.map { ScreenshotNoteMapper.domainToEntity(it) }) as UiState
         }
         .onStart { emit(UiState.Loading) }
         .catch { e -> emit(UiState.Error(e.message ?: "Unknown error")) }
@@ -83,8 +86,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun scanExistingScreenshots() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
+                _scanProgress.value = 0.01f // Signal that scanning has started
                 val uris = screenshotScanner.getRecentScreenshots(Constants.MAX_SCREENSHOTS_TO_SCAN)
-                uris.forEach { uri ->
+                if (uris.isEmpty()) {
+                    _scanProgress.value = 0f
+                    return@launch
+                }
+
+                uris.forEachIndexed { index, uri ->
                     try {
                         processingLimiter.acquire()
                         try {
@@ -97,21 +106,26 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     } catch (e: Exception) {
                         Log.e(TAG, "Failed to acquire processing permit for: $uri", e)
                     }
+                    _scanProgress.value = (index + 1).toFloat() / uris.size
                 }
+
+                _scanProgress.value = 0f // Reset when done
             } catch (e: Exception) {
                 Log.e(TAG, "Error scanning screenshots", e)
+                _scanProgress.value = 0f
             }
         }
     }
 
     private suspend fun processScreenshot(uri: Uri) {
         val path = uri.toString()
-        // Use atomic insert with REPLACE conflict strategy; no need for pre-check
         val text = extractTextUseCase.execute(uri)
         if (text.isNotBlank()) {
             val tags = suggestTagsUseCase.execute(text)
-
-            val category = tags.firstOrNull()?.removePrefix("#")?.replaceFirstChar { it.uppercase() } ?: "Uncategorized"
+            val category = tags.firstOrNull()
+                ?.removePrefix("#")
+                ?.replaceFirstChar { it.uppercase() }
+                ?: "Uncategorized"
 
             val note = ScreenshotNote(
                 imagePath = path,
@@ -136,22 +150,5 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch(Dispatchers.IO) {
             repository.deleteNote(domainNote)
         }
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        // Note: extractTextUseCase no longer has a close() method
-        // Recognizer is created fresh for each operation and properly closed in finally block
-    }
-
-    private fun ScreenshotNote.toEntity(): ScreenshotNoteEntity {
-        return ScreenshotNoteEntity(
-            id = id,
-            imagePath = imagePath,
-            extractedText = extractedText,
-            tags = tags.joinToString(","),
-            category = category,
-            dateAdded = dateAdded
-        )
     }
 }
