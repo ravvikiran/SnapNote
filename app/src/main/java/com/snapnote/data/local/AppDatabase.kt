@@ -2,9 +2,9 @@ package com.snapnote.data.local
 
 import android.content.Context
 import androidx.room.Database
-import androidx.room.Migration
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(entities = [ScreenshotNoteEntity::class], version = 2, exportSchema = true)
