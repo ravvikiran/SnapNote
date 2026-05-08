@@ -13,7 +13,7 @@ lifecycleRuntimeKtx = "2.10.0"
 navigationCompose = "2.9.7"
 room = "2.8.4"
 textRecognition = "16.0.1"
-agp = "9.1.0"
+agp = "9.2.1"
 kotlin = "2.3.20"
 ksp = "2.3.2"
 

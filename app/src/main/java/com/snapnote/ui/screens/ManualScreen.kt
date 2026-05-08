@@ -19,10 +19,13 @@ fun ManualScreen(onNavigateBack: () -> Unit) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.manual_screen_title)) },
+                title = { Text(stringResource(R.string.user_manual)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back_button))
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.back)
+                        )
                     }
                 }
             )
@@ -39,12 +42,12 @@ fun ManualScreen(onNavigateBack: () -> Unit) {
                 title = stringResource(R.string.manual_section_1_title),
                 content = stringResource(R.string.manual_section_1_content)
             )
-            
+
             ManualSection(
                 title = stringResource(R.string.manual_section_2_title),
                 content = stringResource(R.string.manual_section_2_content)
             )
-            
+
             ManualSection(
                 title = stringResource(R.string.manual_section_3_title),
                 content = stringResource(R.string.manual_section_3_content)
@@ -54,9 +57,9 @@ fun ManualScreen(onNavigateBack: () -> Unit) {
                 title = stringResource(R.string.manual_section_4_title),
                 content = stringResource(R.string.manual_section_4_content)
             )
-            
+
             Spacer(modifier = Modifier.height(32.dp))
-            
+
             Text(
                 stringResource(R.string.enjoy_snapnote),
                 style = MaterialTheme.typography.bodyLarge,

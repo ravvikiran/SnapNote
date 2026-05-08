@@ -8,19 +8,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
-<<<<<<< HEAD
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-=======
->>>>>>> 11e59009f9083a265ca217bdc4d9e1adeeb9dd2f
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-<<<<<<< HEAD
 import androidx.compose.ui.layout.ContentScale
-=======
->>>>>>> 11e59009f9083a265ca217bdc4d9e1adeeb9dd2f
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -59,7 +53,6 @@ fun DetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-<<<<<<< HEAD
                 title = {
                     Text(
                         if (isEditing) stringResource(R.string.edit_note)
@@ -72,12 +65,6 @@ fun DetailScreen(
                             Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.back)
                         )
-=======
-                title = { Text(if (isEditing) stringResource(R.string.edit_screen_title) else stringResource(R.string.detail_screen_title)) },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back_button))
->>>>>>> 11e59009f9083a265ca217bdc4d9e1adeeb9dd2f
                     }
                 },
                 actions = {
@@ -98,7 +85,6 @@ fun DetailScreen(
                                     isEditing = false
                                 }
                             }) {
-<<<<<<< HEAD
                                 Icon(
                                     Icons.Filled.Check,
                                     contentDescription = stringResource(R.string.save)
@@ -116,16 +102,6 @@ fun DetailScreen(
                                     Icons.Filled.Delete,
                                     contentDescription = stringResource(R.string.delete)
                                 )
-=======
-                                Icon(Icons.Filled.Check, contentDescription = stringResource(R.string.save_button))
-                            }
-                        } else {
-                            IconButton(onClick = { isEditing = true }) {
-                                Icon(Icons.Filled.Edit, contentDescription = stringResource(R.string.edit_note))
-                            }
-                            IconButton(onClick = { showDeleteConfirmation = true }) {
-                                Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.delete_button))
->>>>>>> 11e59009f9083a265ca217bdc4d9e1adeeb9dd2f
                             }
                         }
                     }
@@ -134,7 +110,6 @@ fun DetailScreen(
         }
     ) { padding ->
         if (note == null) {
-<<<<<<< HEAD
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -142,10 +117,6 @@ fun DetailScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(stringResource(R.string.note_not_found))
-=======
-            Box(modifier = Modifier.fillMaxSize().padding(padding)) {
-                Text(stringResource(R.string.note_not_found_message))
->>>>>>> 11e59009f9083a265ca217bdc4d9e1adeeb9dd2f
             }
         } else {
             Column(
@@ -179,15 +150,11 @@ fun DetailScreen(
                     )
                 }
 
-<<<<<<< HEAD
                 // Extracted Text Section
                 Text(
                     stringResource(R.string.extracted_text),
                     style = MaterialTheme.typography.titleMedium
                 )
-=======
-                Text(stringResource(R.string.extracted_text_label), style = MaterialTheme.typography.titleMedium)
->>>>>>> 11e59009f9083a265ca217bdc4d9e1adeeb9dd2f
 
                 if (isEditing) {
                     OutlinedTextField(
@@ -200,7 +167,7 @@ fun DetailScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(150.dp),
-                        label = { Text(stringResource(R.string.edit_text_hint)) },
+                        label = { Text(stringResource(R.string.edit_text_label)) },
                         supportingText = { Text("${editedText.length}/${Constants.MAX_TEXT_LENGTH}") },
                         isError = showValidationError && editedText.isEmpty()
                     )
@@ -218,16 +185,12 @@ fun DetailScreen(
                     }
                 }
 
-<<<<<<< HEAD
                 // Tags Section
                 Text(
                     stringResource(R.string.tags),
                     style = MaterialTheme.typography.titleMedium
                 )
 
-=======
-                Text(stringResource(R.string.tags_label), style = MaterialTheme.typography.titleMedium)
->>>>>>> 11e59009f9083a265ca217bdc4d9e1adeeb9dd2f
                 if (isEditing) {
                     OutlinedTextField(
                         value = editedTags,
@@ -237,7 +200,7 @@ fun DetailScreen(
                             }
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text(stringResource(R.string.tags_hint)) },
+                        label = { Text(stringResource(R.string.comma_separated_tags)) },
                         supportingText = { Text("${editedTags.length}/${Constants.MAX_TAGS_LENGTH}") }
                     )
                 } else {
@@ -251,14 +214,10 @@ fun DetailScreen(
                             .filter { it.isNotBlank() }
                             .map { it.trim() }
                         if (tags.isEmpty()) {
-<<<<<<< HEAD
                             Text(
                                 stringResource(R.string.no_tags),
                                 style = MaterialTheme.typography.bodySmall
                             )
-=======
-                            Text(stringResource(R.string.no_tags_message), style = MaterialTheme.typography.bodySmall)
->>>>>>> 11e59009f9083a265ca217bdc4d9e1adeeb9dd2f
                         } else {
                             tags.forEach { tag ->
                                 val displayTag = if (tag.startsWith("#")) tag else "#$tag"
@@ -268,16 +227,12 @@ fun DetailScreen(
                     }
                 }
 
-<<<<<<< HEAD
                 // Category Section
                 Text(
                     stringResource(R.string.category),
                     style = MaterialTheme.typography.titleMedium
                 )
 
-=======
-                Text(stringResource(R.string.category_label), style = MaterialTheme.typography.titleMedium)
->>>>>>> 11e59009f9083a265ca217bdc4d9e1adeeb9dd2f
                 if (isEditing) {
                     OutlinedTextField(
                         value = editedCategory,
@@ -287,36 +242,15 @@ fun DetailScreen(
                             }
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text(stringResource(R.string.category_hint)) },
+                        label = { Text(stringResource(R.string.category_label)) },
                         supportingText = { Text("${editedCategory.length}/${Constants.MAX_CATEGORY_LENGTH}") },
                         isError = showValidationError && editedCategory.isEmpty()
                     )
                 } else {
-<<<<<<< HEAD
                     AssistChip(onClick = {}, label = { Text(note.category) })
                 }
 
                 // Validation Error
-=======
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        val tags = note.tags.split(",").filter { it.isNotBlank() }.map { it.trim() }
-                        if (tags.isEmpty()) {
-                            Text(stringResource(R.string.no_tags_message), style = MaterialTheme.typography.bodySmall)
-                        } else {
-                            tags.forEach { tag ->
-                                val displayTag = if (tag.startsWith("#")) tag else "#$tag"
-                                AssistChip(onClick = {}, label = { Text(displayTag) })
-                            }
-                        }
-                    }
-                }
-
->>>>>>> 11e59009f9083a265ca217bdc4d9e1adeeb9dd2f
                 if (showValidationError) {
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
@@ -324,7 +258,7 @@ fun DetailScreen(
                         color = MaterialTheme.colorScheme.errorContainer
                     ) {
                         Text(
-                            stringResource(R.string.validation_error_message),
+                            stringResource(R.string.validation_error),
                             modifier = Modifier.padding(12.dp),
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodySmall
@@ -353,18 +287,14 @@ fun DetailScreen(
                         containerColor = MaterialTheme.colorScheme.error
                     )
                 ) {
-                    Text(stringResource(R.string.delete_confirm_button))
+                    Text(stringResource(R.string.delete))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteConfirmation = false }) {
-                    Text(stringResource(R.string.delete_cancel_button))
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
     }
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 11e59009f9083a265ca217bdc4d9e1adeeb9dd2f
