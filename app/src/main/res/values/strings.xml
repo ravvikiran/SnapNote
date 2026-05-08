@@ -39,7 +39,7 @@
     <!-- Manual Screen -->
     <string name="user_manual">User Manual</string>
     <string name="manual_section_1_title">1. Scanning Screenshots</string>
-    <string name="manual_section_1_content">To start, click the \'Scan Existing Screenshots\' button on the home screen. The app will ask for permission to access your photos. Once granted, it will analyze your screenshots and extract text from them.</string>
+    <string name="manual_section_1_content">To start, click the \"Scan Existing Screenshots\" button on the home screen. The app will ask for permission to access your photos. Once granted, it will analyze your screenshots and extract text from them.</string>
     <string name="manual_section_2_title">2. Searching</string>
     <string name="manual_section_2_content">Use the search bar at the top of the home screen to find specific screenshots. You can search for text found within the image, tags, or categories.</string>
     <string name="manual_section_3_title">3. Navigation</string>
@@ -63,7 +63,7 @@
     <string name="cancel">Cancel</string>
     <string name="allow">Allow</string>
 
-    <!-- Errors & Permissions -->
+    <!-- Errors and Permissions -->
     <string name="error_prefix">Error:</string>
     <string name="image_load_error">Failed to load image</string>
     <string name="unknown_error">Unknown error</string>
@@ -73,4 +73,19 @@
 
     <!-- Splash Screen -->
     <string name="splash_tagline">Capture. Extract. Organize.</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_next">Next</string>
+    <string name="onboarding_get_started">Get Started</string>
+    <string name="onboarding_title_1">Capture Screenshots</string>
+    <string name="onboarding_desc_1">SnapNote scans your device\'s screenshot folder and imports them automatically. Just tap \"Scan Existing Screenshots\" on the home screen to get started.</string>
+    <string name="onboarding_title_2">Extract Text with OCR</string>
+    <string name="onboarding_desc_2">Using Google\'s ML Kit, SnapNote reads the text inside your screenshots. Receipts, code snippets, messages — all searchable instantly.</string>
+    <string name="onboarding_title_3">Auto-Tag and Categorize</string>
+    <string name="onboarding_desc_3">SnapNote automatically suggests tags like #finance, #programming, or #food based on the extracted text. Notes are organized into categories for easy browsing.</string>
+    <string name="onboarding_title_4">Search Everything</string>
+    <string name="onboarding_desc_4">Use the search bar to find any screenshot by its text content, tags, or category. Filter by category chips for quick access to specific groups.</string>
+    <string name="onboarding_title_5">Edit and Manage</string>
+    <string name="onboarding_desc_5">Tap any screenshot to view details. Edit the extracted text, update tags, or change the category. Delete notes you no longer need with a confirmation prompt.</string>
 </resources>

@@ -15,7 +15,6 @@ abstract class AppDatabase : RoomDatabase() {
         @Volatile
         private var INSTANCE: AppDatabase? = null
 
-        // Migration from version 1 to 2 adds indices on imagePath (unique), category, and dateAdded
         private val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_screenshots_imagePath` ON `screenshots` (`imagePath`)")
@@ -32,7 +31,7 @@ abstract class AppDatabase : RoomDatabase() {
                     "snapnote-db"
                 )
                     .enableMultiInstanceInvalidation()
-                    .setJournalMode(JournalMode.AUTOMATIC)
+                    .setJournalMode(RoomDatabase.JournalMode.AUTOMATIC)
                     .addMigrations(MIGRATION_1_2)
                     .build()
                 INSTANCE = instance

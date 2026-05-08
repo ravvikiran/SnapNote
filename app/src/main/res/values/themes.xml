@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.SnapNote" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:navigationBarColor">@android:color/transparent</item>
     </style>
 
-    <!-- Splash screen theme for Android 12+ -->
+    <!-- Splash screen theme -->
     <style name="Theme.SnapNote.Splash" parent="Theme.SnapNote">
         <item name="android:windowBackground">@drawable/splash_background</item>
     </style>
