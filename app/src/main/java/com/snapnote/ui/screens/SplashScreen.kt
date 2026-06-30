@@ -20,7 +20,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.delay
 
 @Composable
 fun SplashScreen(onSplashFinished: () -> Unit) {
@@ -52,8 +51,6 @@ fun SplashScreen(onSplashFinished: () -> Unit) {
 
     LaunchedEffect(Unit) {
         startAnimation = true
-        delay(2000)
-        onSplashFinished()
     }
 
     Box(
@@ -74,7 +71,6 @@ fun SplashScreen(onSplashFinished: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Logo
             Box(
                 modifier = Modifier
                     .size(110.dp)
@@ -84,10 +80,7 @@ fun SplashScreen(onSplashFinished: () -> Unit) {
                     .background(Color.White.copy(alpha = 0.15f)),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "📸",
-                    fontSize = 52.sp
-                )
+                Text(text = "📸", fontSize = 52.sp)
             }
 
             Spacer(modifier = Modifier.height(28.dp))

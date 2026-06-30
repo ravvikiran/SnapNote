@@ -63,7 +63,9 @@ fun HomeScreen(
     onNavigateToDetail: (Int) -> Unit,
     onNavigateToManual: () -> Unit,
     onNavigateToSettings: () -> Unit,
-    viewModel: MainViewModel = viewModel()
+    viewModel: MainViewModel = viewModel(
+        viewModelStoreOwner = LocalContext.current as androidx.activity.ComponentActivity
+    )
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()

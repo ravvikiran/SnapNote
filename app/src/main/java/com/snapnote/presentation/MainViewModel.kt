@@ -20,6 +20,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
+import java.util.concurrent.atomic.AtomicBoolean
 
 private const val TAG = "MainViewModel"
 
@@ -47,6 +48,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _scanProgress = MutableStateFlow(0f)
     val scanProgress: StateFlow<Float> = _scanProgress.asStateFlow()
+
+    private val isScanning = AtomicBoolean(false)
 
     @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
     val uiState: StateFlow<UiState> = combine(_searchQuery, _selectedCategory) { query, category ->
@@ -84,9 +87,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun scanExistingScreenshots() {
+        if (!isScanning.compareAndSet(false, true)) return
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                _scanProgress.value = 0.01f // Signal that scanning has started
+                _scanProgress.value = 0.01f
                 val uris = screenshotScanner.getRecentScreenshots(Constants.MAX_SCREENSHOTS_TO_SCAN)
                 if (uris.isEmpty()) {
                     _scanProgress.value = 0f
@@ -109,10 +113,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     _scanProgress.value = (index + 1).toFloat() / uris.size
                 }
 
-                _scanProgress.value = 0f // Reset when done
+                _scanProgress.value = 0f
             } catch (e: Exception) {
                 Log.e(TAG, "Error scanning screenshots", e)
                 _scanProgress.value = 0f
+            } finally {
+                isScanning.set(false)
             }
         }
     }

@@ -1,8 +1,12 @@
 package com.snapnote.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -16,9 +20,9 @@ import com.snapnote.ui.screens.ManualScreen
 import com.snapnote.ui.screens.OnboardingScreen
 import com.snapnote.ui.screens.SettingsScreen
 import com.snapnote.ui.screens.SplashScreen
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 sealed class Screen(val route: String) {
     object Splash : Screen("splash")
@@ -42,21 +46,29 @@ fun NavGraph(navController: NavHostController) {
         startDestination = Screen.Splash.route
     ) {
         composable(Screen.Splash.route) {
-            SplashScreen(
-                onSplashFinished = {
-                    val onboardingDone = runBlocking {
-                        settingsDataStore.onboardingCompleted.first()
-                    }
+            // Use LaunchedEffect to avoid blocking the main thread
+            var navigated by remember { mutableStateOf(false) }
+
+            LaunchedEffect(Unit) {
+                if (!navigated) {
+                    // Small delay to let the splash animation play
+                    delay(2000)
+                    val onboardingDone = settingsDataStore.onboardingCompleted.first()
                     val destination = if (onboardingDone) {
                         Screen.Home.route
                     } else {
                         Screen.Onboarding.route
                     }
+                    navigated = true
                     navController.navigate(destination) {
                         popUpTo(Screen.Splash.route) { inclusive = true }
                     }
                 }
-            )
+            }
+
+            SplashScreen(onSplashFinished = {
+                // No-op: navigation is handled by LaunchedEffect above
+            })
         }
         composable(Screen.Onboarding.route) {
             OnboardingScreen(
