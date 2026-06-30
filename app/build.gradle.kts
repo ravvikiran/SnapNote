@@ -53,10 +53,6 @@ ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
 }
 
-// Kotlin extension needs to be outside or handled differently in the new DSL if using kotlin { ... }
-// But for jvmTarget, it's often better to use compileOptions or the specific kotlin options.
-// Reverting to a more standard way for AGP 9.0+ that avoids the 'android' deprecation.
-
 dependencies {
     // Core Android
     implementation(libs.androidx.core.ktx)

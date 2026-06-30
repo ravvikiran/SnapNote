@@ -3,7 +3,6 @@
     <style name="Theme.SnapNote" parent="android:Theme.Material.Light.NoActionBar">
     </style>
 
-    <!-- Splash screen theme -->
     <style name="Theme.SnapNote.Splash" parent="Theme.SnapNote">
         <item name="android:windowBackground">@drawable/splash_background</item>
     </style>
